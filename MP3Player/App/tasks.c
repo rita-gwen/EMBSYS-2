@@ -161,7 +161,9 @@ void LcdTouchDemoTask(void* pdata)
     DrawLcdContents();
     
     PrintWithBuf(buf, BUFSIZE, "Initializing FT6206 touchscreen controller\n");
-    if (! touchCtrl.begin(40)) {  // pass in 'sensitivity' coefficient
+    //Using Touch driver instead of direct Adafruit calls
+    HANDLE hTouch = Open(PJDF_DEVICE_ID_LCD_TOUCH, 0);
+    if (!PJDF_IS_VALID_HANDLE(hTouch)) { 
         PrintWithBuf(buf, BUFSIZE, "Couldn't start FT6206 touchscreen controller\n");
         while (1);
     }
@@ -169,13 +171,13 @@ void LcdTouchDemoTask(void* pdata)
     int currentcolor = ILI9341_RED;
 
     while (1) { 
-        boolean touched = false;
         
         // TODO: Poll for a touch on the touch panel
-        // <Your code here>
+        uint8_t is_touched = 0;
+        Ioctl(hTouch, PJDF_CTRL_TOUCH_GET_TOUCHED_FLAG, &is_touched, (INT32U*)0);
         // <hint: Call a function provided by touchCtrl
         
-        if (! touched) {
+        if (! is_touched) {
             OSTimeDly(5);
             continue;
         }
@@ -183,7 +185,7 @@ void LcdTouchDemoTask(void* pdata)
         TS_Point rawPoint;
        
         // TODO: Retrieve a point  
-        // <Your code here>
+        Read(hTouch, &rawPoint, (INT32U*)0);
 
         if (rawPoint.x == 0 && rawPoint.y == 0)
         {

@@ -20,14 +20,14 @@ static char *DeviceDriverIDs [] =
 #define MAXDEVICES (sizeof(DeviceDriverIDs)/sizeof(char*))
 
 
-// PJDF DEVELOPER TODO: add the reference to your driver's pName and Init() function here:
 // IMPORTANT: maintain the same order as in PJDF_DEVICE_IDS
 static DriverInternal driversInternal[MAXDEVICES] = 
 {
     {PJDF_DEVICE_ID_SPI1, InitSPI},
     {PJDF_DEVICE_ID_MP3_VS1053, InitMp3VS1053},
     {PJDF_DEVICE_ID_LCD_ILI9341, InitLcdILI9341},
-    {PJDF_DEVICE_ID_SD_ADAFRUIT, InitSDAdafruit},
+    {PJDF_DEVICE_ID_LCD_TOUCH, InitTouch},
+    {PJDF_DEVICE_ID_SD_ADAFRUIT, InitSDAdafruit}
 };
 
 

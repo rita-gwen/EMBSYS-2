@@ -2686,6 +2686,9 @@
       <name>$PROJ_DIR$\PJDF\pjdfCtrlSpi.h</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\PJDF\pjdfCtrlTouch.h</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\PJDF\pjdfInternal.h</name>
     </file>
     <file>
@@ -2699,6 +2702,9 @@
     </file>
     <file>
       <name>$PROJ_DIR$\PJDF\pjdfInternalSPI.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\PJDF\pjdfInternalTouch.c</name>
     </file>
   </group>
   <group>

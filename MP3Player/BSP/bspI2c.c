@@ -13,6 +13,8 @@
 #include <stm32f4xx.h>
 #include <stm32f4xx_i2c.h>
 #include "bspI2c.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
 
 
 // Initializes the I2C1 memory mapped registers and enables the interface
@@ -24,49 +26,72 @@ void I2C1_init(void){
     // TODO: Fill in missing code to initialize the I2C1 interface.
     
 	// enable APB1 peripheral clock for I2C1
-	// <your code here>
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
     
 	// enable clock for SCL and SDA pins
-	// <your code here>
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 	
 	/* setup SCL and SDA pins
 	 * You can connect the I2C1 functions to two different
 	 * pins:
 	 * 1. SCL on PB6 or PB8  
 	 * 2. SDA on PB7 or PB9
-     *
-     * We will use SCL on PB8 and SDA on PB9 below
+         *
+         * We will use SCL on PB8 and SDA on PB9 below
 	 */
     
-    // Initialize GPIO_InitStruct (declared above) as follows
-    // Set pins 8 and 9.
-    // Set mode to alternate function (AF).
-    // Set speed to 50 MHz
-    // Set OType to open drain (OD).
-    // Set pull-up/pull-down to pull up.
-    // Call GPIO_Init() to initialize GPIOB with GPIO_InitStruct
-    
-    // <your code here for the above>
-    
-	// Connect I2C1 pins to AF:
-    // Call GPIO_PinAFConfig once to set up pin 8 (SCL), once to set up pin 9 (SDA)
-    // <your code here
-    
-	// configure I2C1
-    // Initialze I2C_InitStruct (declared above) as follows:
-    // set clock speed to 100000 (100 kHz)
-    // set mode to I2C mode
-    // set duty cycle to I2C_DutyCycle_2
-    // set own address to 0
-    // set Ack to disabled
-    // set acknowledged address to 7 bits
-    // Then call I2C_Init() to initialize I2C1 with I2C_InitStruct
-    
-    // <Your code here for the above>
-	
-	// enable I2C1
-    // Call I2C_Cmd() to enable I2C1
-	// <your code here>
+          // Initialize GPIO_InitStruct (declared above) as follows
+          // Set pins 8 and 9.
+          // Set mode to alternate function (AF).
+          // Set speed to 50 MHz
+          // Set OType to open drain (OD).
+          // Set pull-up/pull-down to pull up.
+          // Call GPIO_Init() to initialize GPIOB with GPIO_InitStruct
+          
+          GPIO_StructInit(&GPIO_InitStruct);
+          GPIO_InitStruct.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+          GPIO_InitStruct.GPIO_OType = GPIO_OType_OD;
+          GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
+          GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz; 
+          GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
+          GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+          // Connect I2C1 pins to AF:
+          // Call GPIO_PinAFConfig once to set up pin 8 (SCL), once to set up pin 9 (SDA)
+          GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_I2C1);
+          GPIO_PinAFConfig(GPIOB, GPIO_PinSource9, GPIO_AF_I2C1);
+          
+          // configure I2C1
+          // Initialze I2C_InitStruct (declared above) as follows:
+          // set clock speed to 100000 (100 kHz)
+          // set mode to I2C mode
+          // set duty cycle to I2C_DutyCycle_2
+          // set own address to 0
+          // set Ack to disabled
+          // set acknowledged address to 7 bits
+          // Then call I2C_Init() to initialize I2C1 with I2C_InitStruct
+          
+          I2C_StructInit(&I2C_InitStruct);
+          I2C_InitStruct.I2C_ClockSpeed = 100000;
+          I2C_InitStruct.I2C_Mode = I2C_Mode_I2C;
+          I2C_InitStruct.I2C_DutyCycle = I2C_DutyCycle_2;
+          I2C_InitStruct.I2C_OwnAddress1 = 0;
+          I2C_InitStruct.I2C_Ack = I2C_Ack_Disable;
+          I2C_InitStruct.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+          I2C_Init(I2C1, &I2C_InitStruct);
+          
+          // enable I2C1
+          I2C_Cmd(I2C1, ENABLE);
+          
+}
+
+//frees the device and all resources it uses
+void I2C1_close(void){
+        I2C_Cmd(I2C1, DISABLE);
+        GPIO_DeInit(GPIOB);
+	RCC_AHB1PeriphClockCmd(RCC_APB1Periph_I2C1, DISABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, DISABLE);
+  
 }
 
 /* This function issues a start condition and 

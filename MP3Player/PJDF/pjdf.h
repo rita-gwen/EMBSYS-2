@@ -16,16 +16,19 @@
 #include "pjdfCtrlLcdILI9341.h"
 #include "pjdfCtrlMp3VS1053.h"
 #include "pjdfCtrlSDAdafruit.h"
+#include "pjdfCtrlTouch.h"
 
 typedef INT8S HANDLE;
 #define PJDF_IS_VALID_HANDLE(x)  (x > 0) // A valid device driver handle is a positive number
 
 
 // PJDF DEVELOPER TODO LIST FOR ADDING A NEW DRIVER: 
-//    - define a new PJDF_DEVICE_ID_<MYDEVICE> below
-//    - reference it under PJDF_DEVICE_IDS below
-//    - add a new pjdfInternal<mydevice>.c module to implement the pjdfInternal.h interface
-//    - reference the Init() function of your driver in the driversInternal array in pjdf.c
+//    - define a new PJDF_DEVICE_ID_<MYDEVICE> below -  DONE
+//    - reference it under PJDF_DEVICE_IDS below -  DONE
+//    - add a new pjdfInternal<mydevice>.c module to implement the 
+//      pjdfInternal.h interface         -  DONE
+//    - reference the Init() function of your driver in the 
+//      driversInternal array in pjdf.c          -  DONE
 //    - add a new pjdfCtrl<mydevice>.h interface to define the Ioctl() functionality of your device
 //    - #include your pjdfCtrl<mydevice>.h in the present header file above
 //    - add modules as needed to the BSP folder to keep board-dependent code out of your PJDF implementation
@@ -35,12 +38,14 @@ typedef INT8S HANDLE;
 #define PJDF_DEVICE_ID_SPI1  "/dev/spi1"
 #define PJDF_DEVICE_ID_MP3_VS1053   "/dev/mp3_vs1053"
 #define PJDF_DEVICE_ID_LCD_ILI9341   "/dev/lcd_ili9341"
+#define PJDF_DEVICE_ID_LCD_TOUCH     "/dev/lcd_touch_i2c"
 #define PJDF_DEVICE_ID_SD_ADAFRUIT   "/dev/sd_adafruit"
      
 #define PJDF_DEVICE_IDS \
         PJDF_DEVICE_ID_SPI1, \
         PJDF_DEVICE_ID_MP3_VS1053, \
         PJDF_DEVICE_ID_LCD_ILI9341, \
+        PJDF_DEVICE_ID_LCD_TOUCH, \
         PJDF_DEVICE_ID_SD_ADAFRUIT, \
 
 // Driver error codes
