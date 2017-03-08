@@ -4,6 +4,7 @@
 #include "pjdf.h"
 #include "pjdfInternal.h"
 #include "pjdfCtrlTouch.h"
+#include "pjdfCtrlI2C.h"
 #include <Adafruit_FT6206.h>
 
 Adafruit_FT6206 touchCtrlInternal = Adafruit_FT6206(); // The touch controller
@@ -11,14 +12,12 @@ Adafruit_FT6206 touchCtrlInternal = Adafruit_FT6206(); // The touch controller
 // Control registers etc for SPI hardware
 typedef struct _PjdfContextTouch
 {
-    Adafruit_FT6206 *touchAdapter; // Adafruit library class
-    I2C_TypeDef *i2cRegisters;          //I2C port definition
-    
+    HANDLE i2cHandle; // I2C driver handler
+    uint8_t registerAddr;       //addred of the device register for the next read/write operation
 } PjdfContextTouch;
 
 static PjdfContextTouch touch1Context = { 
-    &touchCtrlInternal,
-    I2C1
+    (HANDLE)0x0
 };
 
 
@@ -28,42 +27,39 @@ static PjdfErrCode OpenTouch(DriverInternal *pDriver, INT8U flags)
     PjdfContextTouch *pContext = (PjdfContextTouch*) pDriver->deviceContext;
     if (pContext == NULL) while(1);
 
-    if (! pContext->touchAdapter->begin(40)) {  // pass in 'sensitivity' coefficient
-        return PJDF_ERR_DEVICE_NOT_INIT;
-    }
-    return PJDF_ERR_NONE;
+    return PJDF_ERR_NONE;       //nothing to do
 }
 
 // CloseLCD Touch device
 static PjdfErrCode CloseTouch(DriverInternal *pDriver)
 {
-    I2C1_close();       //free the resources
-    return PJDF_ERR_NONE;
+    PjdfContextTouch *pContext = (PjdfContextTouch*) pDriver->deviceContext;
+    return Close(pContext->i2cHandle);       //free the resources
 }
 
-//Reads touch point coordinates into a TS_Point class buffer
+//Reads a set of registers
 static PjdfErrCode ReadTouch(DriverInternal *pDriver, void* pBuffer, INT32U* pCount)
 {
     PjdfContextTouch *pContext = (PjdfContextTouch*) pDriver->deviceContext;
     if (pContext == NULL) while(1);
-    TS_Point *pointBuffer = (TS_Point*)pBuffer;
-    uint16_t x, y;
-    pContext->touchAdapter->readData(&x, &y);
-    pointBuffer->x = (int16_t)x;
-    pointBuffer->y = (int16_t)y;
-
-    //TODO: Implement reading from touch device
+    //write register address
+    INT32U cnt = 1;
+    Write(pContext->i2cHandle, &(pContext->registerAddr), &cnt);
+    Read(pContext->i2cHandle, pBuffer, pCount); //read the requested number of registers
+         
     return PJDF_ERR_NONE;
 }
 
 
-// WriteTouch
+// SInce it's not crear if multiple registers can be written in one transaction
+//this function will write only first value in pBuffer an ignore the rest.
 static PjdfErrCode WriteTouch(DriverInternal *pDriver, void* pBuffer, INT32U* pCount)
 {
     PjdfContextTouch *pContext = (PjdfContextTouch*) pDriver->deviceContext;
     if (pContext == NULL) while(1);
-
-    //Nothing to do here, this device does not support writing.
+    uint8_t buffer[2] = {pContext->registerAddr, *((uint8_t*)pBuffer)};
+    INT32U cnt = 2;
+    Write(pContext->i2cHandle, buffer, &cnt);
     return PJDF_ERR_NONE;
 }
 
@@ -71,24 +67,16 @@ static PjdfErrCode WriteTouch(DriverInternal *pDriver, void* pBuffer, INT32U* pC
 // Handles the request codes defined in pjdfLctTouchSpi.h
 static PjdfErrCode IoctlTouch(DriverInternal *pDriver, INT8U request, void* pArgs, INT32U* pSize)
 {
-    INT8U osErr;
     PjdfContextTouch *pContext = (PjdfContextTouch*) pDriver->deviceContext;
     if (pContext == NULL) while(1);
     switch (request)
     {
-      case PJDF_CTRL_TOUCH_SET_SENSITIVITY:
-        pContext->touchAdapter->writeRegister8(FT6206_REG_THRESHHOLD, *((uint8_t*)pArgs));
-
-        break;
-      case PJDF_CTRL_TOUCH_GET_TOUCHED_FLAG:
-        if(pContext->touchAdapter->touched())
-          *((uint8_t*)pArgs) = 1;
-        else 
-          *((uint8_t*)pArgs) = 0;
+      case PJDF_CTRL_TOUCH_SET_REGISTER:
+        pContext->registerAddr = *((uint8_t*)pArgs);
         break;
       //TODO: Add specific requests handling
       default:
-        while(1);
+        return PJDF_ERR_UNKNOWN_CTRL_REQUEST;
         break;
     }
     return PJDF_ERR_NONE;
@@ -108,8 +96,14 @@ PjdfErrCode InitTouch(DriverInternal *pDriver, char *pName)
   
     //TODO: Add required initialization
     pDriver->deviceContext = (void*) &touch1Context;     //get driver context
-    I2C1_init();         //Initialize the device
+    //Open the I2C1 port required to talk to this device.
+    HANDLE hI2C = Open(PJDF_DEVICE_ID_I2C1, 0);
+    if (!PJDF_IS_VALID_HANDLE(hI2C)) while(1);
+    //set the device slave address
+    uint8_t slaveAddr = FT6206_ADDR;
+    Ioctl(hI2C, PJDF_CTRL_I2C_SET_SLAVE_ADDR, &slaveAddr, (INT32U*)0);   
     
+    touch1Context.i2cHandle = hI2C;
   
     // Assign implemented functions to the interface pointers
     pDriver->Open = OpenTouch;

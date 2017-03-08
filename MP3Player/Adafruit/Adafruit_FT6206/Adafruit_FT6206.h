@@ -18,6 +18,7 @@
 #define ADAFRUIT_FT6206_LIBRARY
 
 #include <stdint.h>
+#include "bsp.h"
 
 #ifndef boolean
     #define boolean bool
@@ -73,6 +74,7 @@ class Adafruit_FT6206 {
  private:
   uint8_t touches;
   uint16_t touchX[2], touchY[2], touchID[2];
+  HANDLE hTouch;        //Touch device driver handle
 
 };
 
