@@ -14,7 +14,7 @@ typedef struct _PjdfContextI2C
 
 static PjdfContextI2C i2cContext = { 
     0x0,
-    I2C1
+    I2C1                //Ideally this code should be reused for all I2C devices on the chip
 };
 
 OS_CPU_SR cpu_sr = 0u;
@@ -47,7 +47,8 @@ static PjdfErrCode ReadI2C(DriverInternal *pDriver, void* pBuffer, INT32U* pCoun
     PjdfContextI2C *pContext = (PjdfContextI2C*) pDriver->deviceContext;
     if (pContext == NULL) while(1);
 
-    OS_ENTER_CRITICAL();
+    OS_ENTER_CRITICAL();        //I do not see any better solution here but 
+                                //I2C transactions in this application are pretty short, shouldn't affect much.
     I2C_start(pContext->i2cRegisters, (pContext->slaveAddr)<<1, I2C_Direction_Receiver);
     uint8_t i;
     for (i=0; i < (*pCount - 1); i++)
@@ -58,6 +59,7 @@ static PjdfErrCode ReadI2C(DriverInternal *pDriver, void* pBuffer, INT32U* pCoun
     return PJDF_ERR_NONE;
 }
 
+//writes a string of bytes to the device.
 static PjdfErrCode WriteI2C(DriverInternal *pDriver, void* pBuffer, INT32U* pCount)
 {
     PjdfContextI2C *pContext = (PjdfContextI2C*) pDriver->deviceContext;
@@ -102,10 +104,9 @@ PjdfErrCode InitI2C(DriverInternal *pDriver, char *pName)
     // Initialize semaphore for serializing operations on the device 
     pDriver->sem = OSSemCreate(1); 
     if (pDriver->sem == NULL) while (1);  // not enough semaphores available
-    pDriver->refCount = 0; // initial number of Open handles to the device
-    pDriver->maxRefCount = 1; // only one open handle allowed
+    pDriver->refCount = 0;                // initial number of Open handles to the device
+    pDriver->maxRefCount = 1;             // only one open handle allowed
   
-    //TODO: Add required initialization
     pDriver->deviceContext = (void*) &i2cContext;     //get driver context
     I2C1_init();         //Initialize the device. This is I2C1-specific driver, won't work for I2C2
     

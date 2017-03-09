@@ -62,8 +62,10 @@ class Adafruit_FT6206 {
   Adafruit_FT6206(void);
   boolean begin(uint8_t thresh = FT6206_DEFAULT_THRESSHOLD);  
 
-  void writeRegister8(uint8_t reg, uint8_t val);
-  uint8_t readRegister8(uint8_t reg);
+  //convenience methods
+  void writeRegister(uint8_t reg_addr, uint8_t val);
+  void readRegisters(uint8_t reg_addr, uint8_t* reg_values, uint8_t reg_count);
+  uint8_t readRegister(uint8_t reg_addr);
 
   void readData(uint16_t *x, uint16_t *y);
   void autoCalibrate(void); 

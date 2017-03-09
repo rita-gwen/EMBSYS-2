@@ -43,34 +43,22 @@ Adafruit_FT6206::Adafruit_FT6206() {
 */
 /**************************************************************************/
 boolean Adafruit_FT6206::begin(uint8_t threshhold) {
-  //Wire.begin();
+  //Initialize driver handle
   hTouch = Open(PJDF_DEVICE_ID_LCD_TOUCH, (INT8U)0x0);
   // change threshhold to be higher/lower
-  uint8_t reg = FT6206_REG_THRESHHOLD;
-  Ioctl(hTouch, PJDF_CTRL_TOUCH_SET_REGISTER, &reg, (INT32U)0x0);       //set the register
-  Write(hTouch, &threshhold, (INT32U)0x0);      //write the register
+  writeRegister(FT6206_REG_THRESHHOLD, threshhold);
   
-  INT32U cnt = 1;
-  uint8_t reg_val;
-  reg = FT6206_REG_VENDID;
-  Ioctl(hTouch, PJDF_CTRL_TOUCH_SET_REGISTER, &reg, (INT32U)0x0);       //set the register
-  Read(hTouch, &reg_val, &cnt); 
+  uint8_t reg_val = readRegister(FT6206_REG_VENDID);
   if(reg_val != 17) return false;
-  reg = FT6206_REG_CHIPID;
-  Ioctl(hTouch, PJDF_CTRL_TOUCH_SET_REGISTER, &reg, (INT32U)0x0);       //set the register
-  Read(hTouch, &reg_val, &cnt); 
-  if(reg_val != 17) return false;
+  reg_val = readRegister(FT6206_REG_CHIPID);
+  if(reg_val != 6) return false;
   
   return true;
 }
 
 boolean Adafruit_FT6206::touched(void) {
   
-  INT32U cnt = 1;
-  uint8_t reg_val;
-  uint8_t reg = FT6206_REG_NUMTOUCHES;
-  Ioctl(hTouch, PJDF_CTRL_TOUCH_SET_REGISTER, &reg, (INT32U)0x0);       //set the register
-  Read(hTouch, &reg_val, &cnt); 
+  uint8_t reg_val = readRegister(FT6206_REG_NUMTOUCHES);
   if ((reg_val == 1) || (reg_val == 2)) return true;
   return false;
 }
@@ -109,6 +97,20 @@ void Adafruit_FT6206::readData(uint16_t *x, uint16_t *y) {
     }
     *x = touchX[0]; *y = touchY[0];
 }
+
+//convenience methods to hide the driver complexity.
+void Adafruit_FT6206::writeRegister(uint8_t reg_addr, uint8_t val){
+  Ioctl(hTouch, PJDF_CTRL_TOUCH_SET_REGISTER, &reg_addr, (INT32U)0x0);       //set the register
+  Write(hTouch, &val, (INT32U)0x0);      //write the register
+}
+uint8_t Adafruit_FT6206::readRegister(uint8_t reg_addr){
+  INT32U cnt = 1;
+  uint8_t reg_val;
+  Ioctl(hTouch, PJDF_CTRL_TOUCH_SET_REGISTER, &reg_addr, (INT32U)0x0);       //set the register
+  Read(hTouch, &reg_val, &cnt); 
+  return reg_val;
+}
+
 
 TS_Point Adafruit_FT6206::getPoint(void) {
   uint16_t x, y;
