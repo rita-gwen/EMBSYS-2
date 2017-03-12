@@ -17,6 +17,7 @@ Copyright	: David Allegre
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_spi.h"
 
+
 /* Exported define -----------------------------------------------------------*/
 // Clock speed
 #define CLOCK_HSI               HSI_VALUE

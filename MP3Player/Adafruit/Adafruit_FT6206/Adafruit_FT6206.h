@@ -45,6 +45,10 @@
 // calibrated for Adafruit 2.8" ctp screen
 #define FT6206_DEFAULT_THRESSHOLD 128
 
+//If a next touch interrupt occurs mess than this number of msec it is 
+//ignored because it was a same physical touch
+#define FT6206_TOUCH_DEBOUNCE_TIME  200         
+
 class TS_Point {
  public:
   TS_Point(void);
@@ -72,12 +76,14 @@ class Adafruit_FT6206 {
 
   boolean touched(void);
   TS_Point getPoint(void);
+  void waitForTouch(void);
 
  private:
   uint8_t touches;
   uint16_t touchX[2], touchY[2], touchID[2];
   HANDLE hTouch;        //Touch device driver handle
-
+  INT32U lastTouchTime;
+  OS_FLAG_GRP *intFlags;        //Flag Group to get touch interrupt notification
 };
 
 #endif //ADAFRUIT_FT6206_LIBRARY

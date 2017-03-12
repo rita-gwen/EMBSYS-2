@@ -18,14 +18,8 @@ Module Description:
 #include "bsp.h"
 #include "print.h"
 #include "mp3Util.h"
+#include "lcdUtil.h"
 
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ILI9341.h>
-#include <Adafruit_FT6206.h>
-
-Adafruit_ILI9341 lcdCtrl = Adafruit_ILI9341(); // The LCD controller
-
-Adafruit_FT6206 touchCtrl = Adafruit_FT6206(); // The touch controller
 
 #define PENRADIUS 3
 
@@ -61,6 +55,9 @@ void PrintToLcdWithBuf(char *buf, int size, char *format, ...);
 
 // Globals
 BOOLEAN nextSong = OS_FALSE;
+Adafruit_ILI9341* lcdCtrl;
+Adafruit_FT6206*  touchCtrl;
+
 
 /************************************************************************************
 
@@ -82,6 +79,8 @@ void StartupTask(void* pdata)
 
     // Start the system tick
     OS_CPU_SysTickInit(OS_TICKS_PER_SEC);
+    
+    Init_TouchInterrupt();
     
     // Initialize SD card
     PrintWithBuf(buf, PRINTBUFMAX, "Opening handle to SD driver: %s\n", PJDF_DEVICE_ID_SD_ADAFRUIT);
@@ -112,17 +111,19 @@ void StartupTask(void* pdata)
 	OSTaskDel(OS_PRIO_SELF);
 }
 
-static void DrawLcdContents()
+static void DrawLcdContents(Adafruit_ILI9341* lcdCtrl)
 {
 	char buf[BUFSIZE];
-    lcdCtrl.fillScreen(ILI9341_BLACK);
+    lcdCtrl->fillScreen(ILI9341_BLACK);
     
     // Print a message on the LCD
-    lcdCtrl.setCursor(40, 60);
-    lcdCtrl.setTextColor(ILI9341_WHITE);  
-    lcdCtrl.setTextSize(2);
+    /*
+    lcdCtrl->setCursor(40, 60);
+    lcdCtrl->setTextColor(ILI9341_WHITE);  
+    lcdCtrl->setTextSize(2);
     PrintToLcdWithBuf(buf, BUFSIZE, "Hello World!");
-
+  */
+    drawInterface();
 }
 
 /************************************************************************************
@@ -132,53 +133,31 @@ static void DrawLcdContents()
 ************************************************************************************/
 void LcdTouchDemoTask(void* pdata)
 {
-    PjdfErrCode pjdfErr;
-    INT32U length;
+    char buf[BUFSIZE];
+    lcdCtrl = initLcd();
+    touchCtrl = initTouch();
 
-	char buf[BUFSIZE];
-	PrintWithBuf(buf, BUFSIZE, "LcdTouchDemoTask: starting\n");
-
-	PrintWithBuf(buf, BUFSIZE, "Opening LCD driver: %s\n", PJDF_DEVICE_ID_LCD_ILI9341);
-    // Open handle to the LCD driver
-    HANDLE hLcd = Open(PJDF_DEVICE_ID_LCD_ILI9341, 0);
-    if (!PJDF_IS_VALID_HANDLE(hLcd)) while(1);
-
-	PrintWithBuf(buf, BUFSIZE, "Opening LCD SPI driver: %s\n", LCD_SPI_DEVICE_ID);
-    // We talk to the LCD controller over a SPI interface therefore
-    // open an instance of that SPI driver and pass the handle to 
-    // the LCD driver.
-    HANDLE hSPI = Open(LCD_SPI_DEVICE_ID, 0);
-    if (!PJDF_IS_VALID_HANDLE(hSPI)) while(1);
-
-    length = sizeof(HANDLE);
-    pjdfErr = Ioctl(hLcd, PJDF_CTRL_LCD_SET_SPI_HANDLE, &hSPI, &length);
-    if(PJDF_IS_ERROR(pjdfErr)) while(1);
-
-	PrintWithBuf(buf, BUFSIZE, "Initializing LCD controller\n");
-    lcdCtrl.setPjdfHandle(hLcd);
-    lcdCtrl.begin();
-
-    DrawLcdContents();
+    DrawLcdContents(lcdCtrl);
     
     PrintWithBuf(buf, BUFSIZE, "Initializing FT6206 touchscreen controller\n");
     
     int currentcolor = ILI9341_RED;
     
-    touchCtrl.begin();
     while (1) { 
         
         // TODO: Poll for a touch on the touch panel
         // <hint: Call a function provided by touchCtrl
-        
-        if (! touchCtrl.touched()) {
+        /*
+        if (! touchCtrl->touched()) {
             OSTimeDly(5);
             continue;
         }
-        
+        */
+        touchCtrl-> waitForTouch();
         TS_Point rawPoint;
        
         // TODO: Retrieve a point  
-        rawPoint = touchCtrl.getPoint();
+        rawPoint = touchCtrl->getPoint();
 
         if (rawPoint.x == 0 && rawPoint.y == 0)
         {
@@ -190,7 +169,7 @@ void LcdTouchDemoTask(void* pdata)
         p.x = MapTouchToScreen(rawPoint.x, 0, ILI9341_TFTWIDTH, ILI9341_TFTWIDTH, 0);
         p.y = MapTouchToScreen(rawPoint.y, 0, ILI9341_TFTHEIGHT, ILI9341_TFTHEIGHT, 0);
         
-        lcdCtrl.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
+        lcdCtrl->fillCircle(p.x, p.y, PENRADIUS, currentcolor);
     }
 }
 /************************************************************************************
@@ -242,7 +221,7 @@ void Mp3DemoTask(void* pdata)
 // Renders a character at the current cursor position on the LCD
 static void PrintCharToLcd(char c)
 {
-    lcdCtrl.write(c);
+    lcdCtrl->write(c);
 }
 
 /************************************************************************************

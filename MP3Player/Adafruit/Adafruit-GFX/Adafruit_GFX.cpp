@@ -591,11 +591,12 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
      text = _fillcolor;
    }
 
-   _gfx->fillRoundRect(_x - (_w/2), _y - (_h/2), _w, _h, min(_w,_h)/4, fill);
-   _gfx->drawRoundRect(_x - (_w/2), _y - (_h/2), _w, _h, min(_w,_h)/4, outline);
+   _gfx->fillRoundRect(_x, _y, _w, _h, min(_w,_h)/6, fill);
+   _gfx->drawRoundRect(_x, _y, _w, _h, min(_w,_h)/6, outline);
    
    
-   _gfx->setCursor(_x - strlen(_label)*3*_textsize, _y-4*_textsize);
+   _gfx->setCursor(_x + _w/2 - strlen(_label)*3*_textsize
+                 , _y + _h/2 - 4*_textsize);
    _gfx->setTextColor(text);
    _gfx->setTextSize(_textsize);
    //_gfx->print(_label);
@@ -604,8 +605,8 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
  }
 
 boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
-   if ((x < (_x - _w/2)) || (x > (_x + _w/2))) return false;
-   if ((y < (_y - _h/2)) || (y > (_y + _h/2))) return false;
+   if ((x < (_x)) || (x > (_x))) return false;
+   if ((y < (_y)) || (y > (_y))) return false;
    return true;
  }
 

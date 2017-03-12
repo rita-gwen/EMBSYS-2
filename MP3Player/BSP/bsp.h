@@ -29,6 +29,7 @@
 #include "bspMp3.h"
 #include "print.h"
 #include "pjdf.h"
+#include "bspTouch.h"
 
 //get external refrence to the print buffer
 PRINT_BUFFER();

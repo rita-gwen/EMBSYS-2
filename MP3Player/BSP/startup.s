@@ -9,6 +9,7 @@
 ; this module will be placed at the boot vector of the Cortex by the linker (see the linker cmd line for explanation)
 ;
       MODULE    startupCode   
+      
 ;
 ; Code is split into logical sections using the SECTION directive. This allows
 ; the position of code and data to be controlled, important to put the reset vector
@@ -49,6 +50,7 @@
       EXTERN  ContextSwitch
       EXTERN  OS_CPU_SysTickHandler
       EXTERN  SysTick_Handler
+      EXTERN  EXTI10Thru15IrqHandler
 
 ;   This indicates that the following is DATA, even though this is in a CODE section
 ;   The information is not executable, it is a list of pointers
@@ -135,7 +137,6 @@ __vector_table
       PUBWEAK  EXTI3IrqHandler
       PUBWEAK  EXTI4IrqHandler 
       PUBWEAK  EXTI5Thru9IrqHandler
-      PUBWEAK  EXTI10Thru15IrqHandler
       
 NMIIrqHandler 
 MemManageIrqHandler      
@@ -150,7 +151,6 @@ EXTI2IrqHandler
 EXTI3IrqHandler
 EXTI4IrqHandler
 EXTI5Thru9IrqHandler
-EXTI10Thru15IrqHandler
 
 UnusedIrqHandler           
       B         UnusedIrqHandler      ; Loop forever

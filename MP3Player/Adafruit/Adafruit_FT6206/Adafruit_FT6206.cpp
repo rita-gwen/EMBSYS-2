@@ -34,6 +34,7 @@ void delay(uint32_t);
 /**************************************************************************/
 // I2C, no address adjustments or pins
 Adafruit_FT6206::Adafruit_FT6206() {
+  lastTouchTime = 0;
 }
 
 
@@ -52,6 +53,8 @@ boolean Adafruit_FT6206::begin(uint8_t threshhold) {
   if(reg_val != 17) return false;
   reg_val = readRegister(FT6206_REG_CHIPID);
   if(reg_val != 6) return false;
+
+  intFlags = InitInterruptFlags();
   
   return true;
 }
@@ -61,6 +64,21 @@ boolean Adafruit_FT6206::touched(void) {
   uint8_t reg_val = readRegister(FT6206_REG_NUMTOUCHES);
   if ((reg_val == 1) || (reg_val == 2)) return true;
   return false;
+}
+
+void Adafruit_FT6206::waitForTouch(void){
+    INT8U err;
+    while(1){
+      //Wait for the touch event to occur
+      OSFlagPend(intFlags, INT_FLAG_TOUCH_BIT, OS_FLAG_WAIT_SET_ANY + OS_FLAG_CONSUME, 0, &err);
+      INT32U currentTime = OSTimeGet();
+      if(currentTime - lastTouchTime < FT6206_TOUCH_DEBOUNCE_TIME)
+        lastTouchTime = currentTime;
+      else {
+        lastTouchTime = currentTime;
+        break;
+      }
+  }
 }
 
 /*****************************/
