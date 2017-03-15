@@ -46,7 +46,7 @@ uint8_t const SPI_SCK_PIN = 13;
 /** Protect block zero from write if nonzero */
 #define SD_PROTECT_BLOCK_ZERO 1
 /** init timeout ms */
-uint16_t const SD_INIT_TIMEOUT = 2000;
+uint16_t const SD_INIT_TIMEOUT = 5000;
 /** erase timeout ms */
 uint16_t const SD_ERASE_TIMEOUT = 10000;
 /** read timeout ms */

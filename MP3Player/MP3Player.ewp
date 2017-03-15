@@ -2036,6 +2036,12 @@
     <file>
       <name>$PROJ_DIR$\App\tasks.c</name>
     </file>
+    <file>
+      <name>$PROJ_DIR$\App\UIActions.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\App\UIActions.h</name>
+    </file>
   </group>
   <group>
     <name>Arduino</name>

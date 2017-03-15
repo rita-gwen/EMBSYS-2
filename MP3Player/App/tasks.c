@@ -18,7 +18,8 @@ Module Description:
 #include "bsp.h"
 #include "print.h"
 #include "mp3Util.h"
-#include "lcdUtil.h"
+#include "SD.h"
+#include "UIActions.h"
 
 
 #define PENRADIUS 3
@@ -98,6 +99,12 @@ void StartupTask(void* pdata)
     length = sizeof(HANDLE);
     pjdfErr = Ioctl(hSD, PJDF_CTRL_SD_SET_SPI_HANDLE, &hSPI, &length);
     if(PJDF_IS_ERROR(pjdfErr)) while(1);
+    
+    //Attempting to read the content of SD card root dir and print it to the console
+    
+    PrintWithBuf(buf, BUFSIZE, "StartupTask: Opening the SD card.\n");
+    SD.begin(hSD);      
+
 
     // Create the test tasks
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Creating the application tasks\n");
@@ -111,20 +118,6 @@ void StartupTask(void* pdata)
 	OSTaskDel(OS_PRIO_SELF);
 }
 
-static void DrawLcdContents(Adafruit_ILI9341* lcdCtrl)
-{
-	char buf[BUFSIZE];
-    lcdCtrl->fillScreen(ILI9341_BLACK);
-    
-    // Print a message on the LCD
-    /*
-    lcdCtrl->setCursor(40, 60);
-    lcdCtrl->setTextColor(ILI9341_WHITE);  
-    lcdCtrl->setTextSize(2);
-    PrintToLcdWithBuf(buf, BUFSIZE, "Hello World!");
-  */
-    drawInterface();
-}
 
 /************************************************************************************
 
@@ -137,7 +130,7 @@ void LcdTouchDemoTask(void* pdata)
     lcdCtrl = initLcd();
     touchCtrl = initTouch();
 
-    DrawLcdContents(lcdCtrl);
+    InitUI();
     
     PrintWithBuf(buf, BUFSIZE, "Initializing FT6206 touchscreen controller\n");
     
@@ -145,18 +138,11 @@ void LcdTouchDemoTask(void* pdata)
     
     while (1) { 
         
-        // TODO: Poll for a touch on the touch panel
-        // <hint: Call a function provided by touchCtrl
-        /*
-        if (! touchCtrl->touched()) {
-            OSTimeDly(5);
-            continue;
-        }
-        */
+        // We are doing event waiting here instead of polling
         touchCtrl-> waitForTouch();
         TS_Point rawPoint;
        
-        // TODO: Retrieve a point  
+        //Retrieve a point  
         rawPoint = touchCtrl->getPoint();
 
         if (rawPoint.x == 0 && rawPoint.y == 0)

@@ -47,15 +47,31 @@ Adafruit_FT6206* initTouch(){
     return &touchCtrlObj;
 }
 
-#define LIST_AREA_HEIGHT 180
+//Page layout parameters
+#define LIST_AREA_HEIGHT 220
 #define PADDING 4
 #define BUTTON_WIDTH (ILI9341_TFTWIDTH - 3*PADDING)/2
 #define BUTTON_HEIGHT (ILI9341_TFTHEIGHT - LIST_AREA_HEIGHT - 3*PADDING)/2
+#define CHAR_WIDTH 6
+#define CHAR_HEIGHT 8
+#define LINE_PADDING 2
+#define TEXT_SIZE 2
+#define POINTER_X PADDING + LINE_PADDING
+#define LIST_START_X PADDING + 2*LINE_PADDING + (CHAR_HEIGHT * TEXT_SIZE)/2
+#define LIST_START_Y PADDING + 2 + LINE_PADDING
+#define TEXT_COLOR ILI9341_YELLOW
+
+
+uint8_t pointerPos = 0;
 
 void drawInterface(){
-  lcdCtrlObj.drawRect(3, 3
-                      , ILI9341_TFTWIDTH - 6, LIST_AREA_HEIGHT, ILI9341_PURPLE);
-  lcdCtrlObj.drawRect(4, 4, ILI9341_TFTWIDTH - 8, LIST_AREA_HEIGHT-2, ILI9341_PURPLE);
+  lcdCtrlObj.fillScreen(ILI9341_BLACK);
+  lcdCtrlObj.drawRect(PADDING-1, PADDING-1
+                      , ILI9341_TFTWIDTH - PADDING*2 + 2, LIST_AREA_HEIGHT
+                      , ILI9341_PURPLE);
+  lcdCtrlObj.drawRect(PADDING, PADDING
+                      , ILI9341_TFTWIDTH - PADDING*2, LIST_AREA_HEIGHT-2
+                      , ILI9341_PURPLE);
   char* txtStart = "Start";
   char* txtStop = "Stop";
   char* txtUp = "Up";
@@ -63,23 +79,43 @@ void drawInterface(){
   btnStart.initButton(&lcdCtrlObj, PADDING, LIST_AREA_HEIGHT + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtStart, 2);
+                        , txtStart, TEXT_SIZE);
   btnStart.drawButton(false);
   btnStop.initButton(&lcdCtrlObj, PADDING, LIST_AREA_HEIGHT + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtStop, 2);
+                        , txtStop, TEXT_SIZE);
   btnStop.drawButton(false);
   btnUp.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, LIST_AREA_HEIGHT + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtUp, 2);
+                        , txtUp, TEXT_SIZE);
   btnUp.drawButton(false);
   btnDown.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, LIST_AREA_HEIGHT + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtDown, 2);
+                        , txtDown, TEXT_SIZE);
   btnDown.drawButton(false);
 }
 
-void drawString(){}
+void drawListElement(uint8_t elementPosition, char* elementName){
+  lcdCtrlObj.setCursor(LIST_START_X, 
+                       LIST_START_Y + (TEXT_SIZE * CHAR_HEIGHT + LINE_PADDING * 2) * elementPosition );
+  lcdCtrlObj.setTextSize(TEXT_SIZE);
+  lcdCtrlObj.setTextColor(TEXT_COLOR);
+  lcdCtrlObj.setTextWrap(false);
+  char* i= elementName;
+  while(*i) lcdCtrlObj.write(*i++);
+}
+
+void drawListPointer(uint8_t elementPosition){
+  int y = LIST_START_Y + (TEXT_SIZE * CHAR_HEIGHT + LINE_PADDING * 2) * elementPosition;
+  lcdCtrlObj.drawTriangle(POINTER_X, y
+               , POINTER_X + (CHAR_HEIGHT * TEXT_SIZE)/2, y + (CHAR_HEIGHT * TEXT_SIZE)/2
+               , POINTER_X, y + (CHAR_HEIGHT * TEXT_SIZE)
+               , TEXT_COLOR);
+  lcdCtrlObj.fillTriangle(POINTER_X, y
+               , POINTER_X + (CHAR_HEIGHT * TEXT_SIZE)/2, y + (CHAR_HEIGHT * TEXT_SIZE)/2
+               , POINTER_X, y + (CHAR_HEIGHT * TEXT_SIZE)
+               , TEXT_COLOR);
+}
