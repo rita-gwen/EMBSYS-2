@@ -21,7 +21,7 @@
 
   
   // uCOS memory partition containing a block of preallocated SdFile instances
-  static const int MaxFiles = 10;
+  static const int MaxFiles = 30;
   static SdFile  sdFileHeapArray[MaxFiles];
   static OS_MEM *sdFileHeap;
   

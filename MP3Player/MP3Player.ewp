@@ -248,7 +248,7 @@
         <option>
           <name>CCAllowList</name>
           <version>1</version>
-          <state>11111010</state>
+          <state>10010000</state>
         </option>
         <option>
           <name>CCDebugInfo</name>
@@ -348,7 +348,7 @@
         </option>
         <option>
           <name>CCOptLevel</name>
-          <state>3</state>
+          <state>2</state>
         </option>
         <option>
           <name>CCOptStrategy</name>
@@ -357,7 +357,7 @@
         </option>
         <option>
           <name>CCOptLevelSlave</name>
-          <state>3</state>
+          <state>2</state>
         </option>
         <option>
           <name>CompilerMisraRules98</name>
@@ -2015,6 +2015,9 @@
         <name>$PROJ_DIR$\App\uCOS\os_cfg.h</name>
       </file>
     </group>
+    <file>
+      <name>$PROJ_DIR$\App\FileRing.c</name>
+    </file>
     <file>
       <name>$PROJ_DIR$\App\lcdUtil.h</name>
     </file>

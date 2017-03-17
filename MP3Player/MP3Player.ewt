@@ -2383,6 +2383,9 @@
       </file>
     </group>
     <file>
+      <name>$PROJ_DIR$\App\FileRing.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\App\lcdUtil.h</name>
     </file>
     <file>

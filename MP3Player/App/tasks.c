@@ -21,7 +21,7 @@ Module Description:
 #include "SD.h"
 #include "UIActions.h"
 #include "MP3Player.h"
-
+#include "FileRing.h"
 
 #define PENRADIUS 3
 
@@ -88,8 +88,7 @@ void StartupTask(void* pdata)
     hSD = Open(PJDF_DEVICE_ID_SD_ADAFRUIT, 0);
     if (!PJDF_IS_VALID_HANDLE(hSD)) while(1);
 
-
-    PrintWithBuf(buf, PRINTBUFMAX, "Opening SD SPI driver: %s\n", SD_SPI_DEVICE_ID);
+    PrintWithBuf(buf, PRINTBUFMAX, "Unknown command: %s\n", SD_SPI_DEVICE_ID);
     // We talk to the SD controller over a SPI interface therefore
     // open an instance of that SPI driver and pass the handle to 
     // the SD driver.
@@ -105,13 +104,19 @@ void StartupTask(void* pdata)
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Opening the SD card.\n");
     SD.begin(hSD);      
 
+    if(InitRing() != OS_ERR_NONE){
+      PrintWithBuf(buf, BUFSIZE, "Cannot initialize the ring buffer.\n");
+      while(1);
+    }
+     
+    RingLoadFiles();    //Load file names into the ring buffer
 
     // Create the test tasks
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Creating the application tasks\n");
 
     // The maximum number of tasks the application can have is defined by OS_MAX_TASKS in os_cfg.h
     OSTaskCreate(LcdTouchDemoTask, (void*)0, &LcdTouchDemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST2_PRIO);
-    OSTimeDly(2000); // Allow LCD to initialize before starting the playback task.
+    OSTimeDly(3000); // Allow LCD to initialize before starting the playback task.
     OSTaskCreate(Mp3PlaybackTask, (void*)0, &Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST1_PRIO);
 
     // Delete ourselves, letting the work be done in the new tasks.
@@ -157,6 +162,7 @@ void LcdTouchDemoTask(void* pdata)
         p.y = MapTouchToScreen(rawPoint.y, 0, ILI9341_TFTHEIGHT, ILI9341_TFTHEIGHT, 0);
         
         lcdCtrl->fillCircle(p.x, p.y, PENRADIUS, currentcolor);
+        DispatchUIEvent(&p);
     }
 }
 /************************************************************************************

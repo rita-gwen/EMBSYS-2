@@ -60,6 +60,7 @@
 #define APP_TASK_TEST2_PRIO                 6
 #define APP_TASK_TEST3_PRIO                 7
 #define  OS_TASK_TMR_PRIO                (OS_LOWEST_PRIO - 2u)
+#define APP_RING_MUTEX_PRIO                 3
 
 
 /*

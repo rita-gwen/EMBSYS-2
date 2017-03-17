@@ -13,6 +13,12 @@ Adafruit_GFX_Button btnStop = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnUp = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnDown = Adafruit_GFX_Button();
 
+Adafruit_GFX_Button* buttons[4] = {&btnStart, &btnStop, &btnUp, &btnDown};
+
+Adafruit_GFX_Button** getButtonsList(){
+  return buttons;
+}
+
 Adafruit_ILI9341* initLcd(){
     PjdfErrCode pjdfErr;
     INT32U length;
@@ -79,22 +85,22 @@ void drawInterface(){
   btnStart.initButton(&lcdCtrlObj, PADDING, LIST_AREA_HEIGHT + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtStart, TEXT_SIZE);
+                        , txtStart, TEXT_SIZE, UI_CMD_START_PLAYBACK);
   btnStart.drawButton(false);
   btnStop.initButton(&lcdCtrlObj, PADDING, LIST_AREA_HEIGHT + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtStop, TEXT_SIZE);
+                        , txtStop, TEXT_SIZE, UI_CMD_STOP_PLAYBACK);
   btnStop.drawButton(false);
   btnUp.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, LIST_AREA_HEIGHT + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtUp, TEXT_SIZE);
+                        , txtUp, TEXT_SIZE, UI_CMD_MOVE_UP);
   btnUp.drawButton(false);
   btnDown.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, LIST_AREA_HEIGHT + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtDown, TEXT_SIZE);
+                        , txtDown, TEXT_SIZE, UI_CMD_MOVE_DOWN);
   btnDown.drawButton(false);
 }
 

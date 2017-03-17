@@ -561,7 +561,8 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
 					  uint8_t w, uint8_t h, 
 					  uint16_t outline, uint16_t fill, 
 					  uint16_t textcolor,
-					  char *label, uint8_t textsize)
+					  char *label, uint8_t textsize,
+                                          uint8_t command )
 {
   _x = x;
   _y = y;
@@ -574,6 +575,7 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
   _gfx = gfx;
   strncpy(_label, label, 9);
   _label[9] = 0;
+  _command = command;
 }
 
  
@@ -605,8 +607,8 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
  }
 
 boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
-   if ((x < (_x)) || (x > (_x))) return false;
-   if ((y < (_y)) || (y > (_y))) return false;
+   if ((x < (_x)) || (x > (_x + _w))) return false;
+   if ((y < (_y)) || (y > (_y + _h))) return false;
    return true;
  }
 
@@ -619,3 +621,4 @@ boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
  boolean Adafruit_GFX_Button::isPressed() { return currstate; }
  boolean Adafruit_GFX_Button::justPressed() { return (currstate && !laststate); }
  boolean Adafruit_GFX_Button::justReleased() { return (!currstate && laststate); }
+ uint8_t Adafruit_GFX_Button::getCommand(){return _command; }

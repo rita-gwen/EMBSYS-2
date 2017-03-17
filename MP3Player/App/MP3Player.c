@@ -3,7 +3,6 @@
 #include "mp3Util.h"
 #include "MP3Player.h"
 
-char* fileToPlay;
 OS_FLAG_GRP mp3Flags;        //Flag Group to control MP3 Player task
 
 
@@ -36,7 +35,10 @@ HANDLE InitDrivers(){
     return hMp3;
 }
 
-
+/***
+* MP3PlaybackTask can be in 
+*
+*/
 void Mp3PlaybackTask(void* pdata)
 {
     char buf[BUFSIZE];
@@ -57,3 +59,4 @@ void Mp3PlaybackTask(void* pdata)
         PrintWithBuf(buf, BUFSIZE, "Done streaming sound file  count=%d\n", count);
     }
 }
+

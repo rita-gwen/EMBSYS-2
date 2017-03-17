@@ -48,6 +48,7 @@ public:
   boolean isDirectory(void);
   File openNextFile(uint8_t mode = O_RDONLY);
   void rewindDirectory(void);
+  char* getNextFileName(char* nameBuf);
   
   //using Print::write;
 };

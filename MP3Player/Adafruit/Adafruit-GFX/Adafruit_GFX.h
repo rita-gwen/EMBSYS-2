@@ -99,7 +99,7 @@ class Adafruit_GFX_Button {
   void initButton(Adafruit_GFX *gfx, int16_t x, int16_t y, 
 		      uint8_t w, uint8_t h, 
 		      uint16_t outline, uint16_t fill, uint16_t textcolor,
-		      char *label, uint8_t textsize);
+		      char *label, uint8_t textsize, uint8_t command);
   void drawButton(boolean inverted = false);
   boolean contains(int16_t x, int16_t y);
 
@@ -107,6 +107,7 @@ class Adafruit_GFX_Button {
   boolean isPressed();
   boolean justPressed();
   boolean justReleased();
+  uint8_t getCommand();
 
  private:
   Adafruit_GFX *_gfx;
@@ -115,7 +116,8 @@ class Adafruit_GFX_Button {
   uint8_t _textsize;
   uint16_t _outlinecolor, _fillcolor, _textcolor;
   char _label[10];
-
+  uint8_t _command;
+  
   boolean currstate, laststate;
 };
 

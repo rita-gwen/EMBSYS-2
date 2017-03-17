@@ -609,6 +609,39 @@ File File::openNextFile(uint8_t mode) {
   return File();
 }
 
+// allows you to iterate through files in a directory
+// returns the buffer pointer if success, 0 if nothing was read
+char* File::getNextFileName(char* nameBuf) {
+  dir_t p;
+
+  //Serial.print("\t\treading dir...");
+  while (_file->readDir(&p) > 0) {
+
+    // done if past last used entry
+    if (p.name[0] == DIR_NAME_FREE) {
+      //Serial.println("end");
+      return (char*)0x0;
+    }
+
+    // skip deleted entry and entries for . and  ..
+    if (p.name[0] == DIR_NAME_DELETED || p.name[0] == '.') {
+      //Serial.println("dots");
+      continue;
+    }
+
+    // if does not have required attributes then skip
+    if ((!DIR_IS_FILE(&p))) {
+      //Serial.println("notafile");
+      continue;
+    }
+
+    _file->dirName(p, nameBuf);
+    return nameBuf;
+  }
+    
+  return (char*)0x0;
+}
+
 void File::rewindDirectory(void) {  
   if (isDirectory())
     _file->rewind();
