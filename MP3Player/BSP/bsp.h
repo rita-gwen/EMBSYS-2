@@ -31,6 +31,8 @@
 #include "pjdf.h"
 #include "bspTouch.h"
 
+#define BUFSIZE 256
+
 //get external refrence to the print buffer
 PRINT_BUFFER();
 

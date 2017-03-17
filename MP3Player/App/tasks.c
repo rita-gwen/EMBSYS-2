@@ -20,6 +20,7 @@ Module Description:
 #include "mp3Util.h"
 #include "SD.h"
 #include "UIActions.h"
+#include "MP3Player.h"
 
 
 #define PENRADIUS 3
@@ -32,7 +33,6 @@ long MapTouchToScreen(long x, long in_min, long in_max, long out_min, long out_m
 
 #include "train_crossing.h"
 
-#define BUFSIZE 256
 
 /************************************************************************************
 
@@ -110,8 +110,9 @@ void StartupTask(void* pdata)
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Creating the application tasks\n");
 
     // The maximum number of tasks the application can have is defined by OS_MAX_TASKS in os_cfg.h
-    OSTaskCreate(Mp3DemoTask, (void*)0, &Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST1_PRIO);
     OSTaskCreate(LcdTouchDemoTask, (void*)0, &LcdTouchDemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST2_PRIO);
+    OSTimeDly(2000); // Allow LCD to initialize before starting the playback task.
+    OSTaskCreate(Mp3PlaybackTask, (void*)0, &Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST1_PRIO);
 
     // Delete ourselves, letting the work be done in the new tasks.
     PrintWithBuf(buf, BUFSIZE, "StartupTask: deleting self\n");
@@ -139,7 +140,7 @@ void LcdTouchDemoTask(void* pdata)
     while (1) { 
         
         // We are doing event waiting here instead of polling
-        touchCtrl-> waitForTouch();
+        touchCtrl->waitForTouch();
         TS_Point rawPoint;
        
         //Retrieve a point  
@@ -191,14 +192,17 @@ void Mp3DemoTask(void* pdata)
 
     // Send initialization data to the MP3 decoder and run a test
 	PrintWithBuf(buf, BUFSIZE, "Starting MP3 device test\n");
+        
     Mp3Init(hMp3);
     int count = 0;
+    char* fileName="/MOUNT-01.MP3";
     
     while (1)
     {
         OSTimeDly(500);
         PrintWithBuf(buf, BUFSIZE, "Begin streaming sound file  count=%d\n", ++count);
-        Mp3Stream(hMp3, (INT8U*)Train_Crossing, sizeof(Train_Crossing)); 
+        //Mp3Stream(hMp3, (INT8U*)Train_Crossing, sizeof(Train_Crossing)); 
+        Mp3StreamSDFile(hMp3, fileName);
         PrintWithBuf(buf, BUFSIZE, "Done streaming sound file  count=%d\n", count);
     }
 }

@@ -1,8 +1,6 @@
 #include "bsp.h"
 #include "print.h"
 
-#define BUFSIZE 150
-
 OS_FLAG_GRP *intFlags = 0;
 
 

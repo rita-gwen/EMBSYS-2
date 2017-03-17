@@ -45,7 +45,7 @@
 #define OS_MAX_QS                 4u   /* Max. number of queue control blocks in your application      */
 #define OS_MAX_TASKS             20u   /* Max. number of tasks in your application, MUST be >= 2       */
 
-#define OS_SCHED_LOCK_EN          1u   /* Include code for OSSchedLock() and OSSchedUnlock()           */
+#define OS_SCHED_LOCK_EN          0u   /* Include code for OSSchedLock() and OSSchedUnlock()           */
 
 #define OS_TICK_STEP_EN           1u   /* Enable tick stepping feature for uC/OS-View                  */
 #define OS_TICKS_PER_SEC       1000u   /* Set the number of ticks in one second                        */
@@ -60,17 +60,17 @@
 
 
                                        /* --------------------- TASK MANAGEMENT ---------------------- */
-#define OS_TASK_CHANGE_PRIO_EN    1u   /*     Include code for OSTaskChangePrio()                      */
+#define OS_TASK_CHANGE_PRIO_EN    0u   /*     Include code for OSTaskChangePrio()                      */
 #define OS_TASK_CREATE_EN         1u   /*     Include code for OSTaskCreate()                          */
-#define OS_TASK_CREATE_EXT_EN     1u   /*     Include code for OSTaskCreateExt()                       */
+#define OS_TASK_CREATE_EXT_EN     0u   /*     Include code for OSTaskCreateExt()                       */
 #define OS_TASK_DEL_EN            1u   /*     Include code for OSTaskDel()                             */
-#define OS_TASK_NAME_EN           1u   /*     Enable task names                                        */
+#define OS_TASK_NAME_EN           0u   /*     Enable task names                                        */
 #define OS_TASK_PROFILE_EN        1u   /*     Include variables in OS_TCB for profiling                */
-#define OS_TASK_QUERY_EN          1u   /*     Include code for OSTaskQuery()                           */
+#define OS_TASK_QUERY_EN          0u   /*     Include code for OSTaskQuery()                           */
 #define OS_TASK_REG_TBL_SIZE      1u   /*     Size of task variables array (#of INT32U entries)        */
 #define OS_TASK_STAT_EN           1u   /*     Enable (1) or Disable(0) the statistics task             */
 #define OS_TASK_STAT_STK_CHK_EN   1u   /*     Check task stacks from statistic task                    */
-#define OS_TASK_SUSPEND_EN        1u   /*     Include code for OSTaskSuspend() and OSTaskResume()      */
+#define OS_TASK_SUSPEND_EN        0u   /*     Include code for OSTaskSuspend() and OSTaskResume()      */
 #define OS_TASK_SW_HOOK_EN        1u   /*     Include code for OSTaskSwHook()                          */
 
 
@@ -85,7 +85,7 @@
 
 
                                        /* -------------------- MESSAGE MAILBOXES --------------------- */
-#define OS_MBOX_EN                1u   /* Enable (1) or Disable (0) code generation for MAILBOXES      */
+#define OS_MBOX_EN                0u   /* Enable (1) or Disable (0) code generation for MAILBOXES      */
 #define OS_MBOX_ACCEPT_EN         1u   /*     Include code for OSMboxAccept()                          */
 #define OS_MBOX_DEL_EN            1u   /*     Include code for OSMboxDel()                             */
 #define OS_MBOX_PEND_ABORT_EN     1u   /*     Include code for OSMboxPendAbort()                       */
@@ -101,14 +101,14 @@
 
 
                                        /* ---------------- MUTUAL EXCLUSION SEMAPHORES --------------- */
-#define OS_MUTEX_EN               1u   /* Enable (1) or Disable (0) code generation for MUTEX          */
+#define OS_MUTEX_EN               0u   /* Enable (1) or Disable (0) code generation for MUTEX          */
 #define OS_MUTEX_ACCEPT_EN        1u   /*     Include code for OSMutexAccept()                         */
 #define OS_MUTEX_DEL_EN           1u   /*     Include code for OSMutexDel()                            */
 #define OS_MUTEX_QUERY_EN         1u   /*     Include code for OSMutexQuery()                          */
 
 
                                        /* ---------------------- MESSAGE QUEUES ---------------------- */
-#define OS_Q_EN                   1u   /* Enable (1) or Disable (0) code generation for QUEUES         */
+#define OS_Q_EN                   0u   /* Enable (1) or Disable (0) code generation for QUEUES         */
 #define OS_Q_ACCEPT_EN            1u   /*     Include code for OSQAccept()                             */
 #define OS_Q_DEL_EN               1u   /*     Include code for OSQDel()                                */
 #define OS_Q_FLUSH_EN             1u   /*     Include code for OSQFlush()                              */

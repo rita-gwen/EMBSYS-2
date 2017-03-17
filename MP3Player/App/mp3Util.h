@@ -17,5 +17,5 @@ void Mp3Test(HANDLE hMp3);
 void Mp3Stream(HANDLE hMp3, INT8U *pBuf, INT32U bufLen);
 void Mp3StreamSDFile(HANDLE hMp3, char *pFilename);
 
-
 #endif
+

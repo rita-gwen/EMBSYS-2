@@ -2392,6 +2392,12 @@
       <name>$PROJ_DIR$\App\main.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\App\MP3Player.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\App\MP3Player.h</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\App\mp3Util.c</name>
     </file>
     <file>
