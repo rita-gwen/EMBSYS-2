@@ -1,5 +1,6 @@
 
 #include "string.h"
+#include "math.h"
 #include "lcdUtil.h"
 #define BUFSIZE 256
 
@@ -60,10 +61,12 @@ Adafruit_FT6206* initTouch(){
 
 //Page layout parameters
 #define LIST_AREA_HEIGHT 220
-#define BUTTON_AREA_START 240
+#define BUTTON_AREA_START_Y 240
 #define PADDING 4
+#define PROGRESS_START_Y LIST_AREA_HEIGHT + PADDING
+#define PROGRESS_HEIGHT BUTTON_AREA_START_Y - LIST_AREA_HEIGHT - PADDING
 #define BUTTON_WIDTH (ILI9341_TFTWIDTH - 3*PADDING)/2
-#define BUTTON_HEIGHT (ILI9341_TFTHEIGHT - LIST_AREA_HEIGHT - 3*PADDING)/2
+#define BUTTON_HEIGHT (ILI9341_TFTHEIGHT - BUTTON_AREA_START_Y - 3*PADDING)/2
 #define CHAR_WIDTH 6
 #define CHAR_HEIGHT 8
 #define LINE_PADDING 2
@@ -72,6 +75,7 @@ Adafruit_FT6206* initTouch(){
 #define LIST_START_X PADDING + 2*LINE_PADDING + (CHAR_HEIGHT * TEXT_SIZE)/2
 #define LIST_START_Y PADDING + 2 + LINE_PADDING
 #define TEXT_COLOR ILI9341_YELLOW
+#define PROGRESS_COLOR ILI9341_YELLOW
 #define BG_COLOR ILI9341_BLACK
 
 
@@ -89,22 +93,22 @@ void drawInterface(){
   char* txtStop = "Stop";
   char* txtUp = "Up";
   char* txtDown = "Down";
-  btnStart.initButton(&lcdCtrlObj, PADDING, LIST_AREA_HEIGHT + PADDING
+  btnStart.initButton(&lcdCtrlObj, PADDING, BUTTON_AREA_START_Y + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtStart, TEXT_SIZE, UI_CMD_START_PLAYBACK);
   btnStart.drawButton(false);
-  btnStop.initButton(&lcdCtrlObj, PADDING, LIST_AREA_HEIGHT + 2* PADDING + BUTTON_HEIGHT
+  btnStop.initButton(&lcdCtrlObj, PADDING, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtStop, TEXT_SIZE, UI_CMD_STOP_PLAYBACK);
   btnStop.drawButton(false);
-  btnUp.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, LIST_AREA_HEIGHT + PADDING
+  btnUp.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtUp, TEXT_SIZE, UI_CMD_MOVE_UP);
   btnUp.drawButton(false);
-  btnDown.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, LIST_AREA_HEIGHT + 2* PADDING + BUTTON_HEIGHT
+  btnDown.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtDown, TEXT_SIZE, UI_CMD_MOVE_DOWN);
@@ -139,4 +143,22 @@ void drawListPointer(uint8_t elementPosition){
 
 void eraseListPointer(uint8_t elementPosition){
   _drawListPointer(elementPosition, BG_COLOR);
+}
+
+static float progressBarPosition = 0.0;
+
+void eraseProgressBar(){
+  lcdCtrlObj.drawRect(PADDING, PROGRESS_START_Y
+                      , ILI9341_TFTWIDTH - PADDING*2, PROGRESS_HEIGHT
+                      , BG_COLOR);
+  progressBarPosition = 0.0;
+}
+
+void incrementProgressBar(float p_progressPct){
+  uint16_t currentPix = floor((ILI9341_TFTWIDTH - PADDING*2) * progressBarPosition);
+  progressBarPosition = p_progressPct;
+  uint16_t newPix = floor((ILI9341_TFTWIDTH - PADDING*2) * progressBarPosition);  
+  lcdCtrlObj.fillRect(PADDING, PROGRESS_START_Y
+                      , newPix, PROGRESS_HEIGHT
+                      , PROGRESS_COLOR);  
 }

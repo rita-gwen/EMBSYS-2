@@ -63,7 +63,7 @@ INT8U err;
 
     // Create the startup task
     DEBUGMSG(1, ("main: Creating start up task.\n"));
-
+    
     err = OSTaskCreate(
         StartupTask,
         (void*)0,

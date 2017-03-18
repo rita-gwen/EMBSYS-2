@@ -16,11 +16,12 @@ All harware/software initializations should be done beforehand
 #include "MP3Player.h"
 
 #define MAX_UI_QUEUE_SIZE 10
+#define COMMAND_DATA_SIZE 32
 
 //-- Message queue definitions
 typedef struct {
   uint8_t uiCommand;
-  void* p_data;         //additional data to pass with the command if required.
+  char p_data[COMMAND_DATA_SIZE];         //additional data to pass with the command if required.
 } UIQMessage;
 
 UIQMessage qMessageMemory[MAX_UI_QUEUE_SIZE];   //the block of memory to use for queue messages
@@ -35,7 +36,9 @@ void MovePointerUp(void* p_data);
 void MovePointerDown(void* p_data);
 void StartPlayback(void* p_data);
 void StopPlayback(void* p_data);
-
+void ResetProgressBar(void* p_data);
+void UpdateProgressBar(void* p_data);
+    
 struct UICommandAction{
   uint8_t uiCommand;
   void (*action)(void* p_data);
@@ -45,7 +48,9 @@ UICommandAction ui_commands[UI_MAXCOMMANDS] = {
   {UI_CMD_MOVE_DOWN,MovePointerDown},
   {UI_CMD_MOVE_UP,MovePointerUp},
   {UI_CMD_START_PLAYBACK,StartPlayback},
-  {UI_CMD_STOP_PLAYBACK,StopPlayback}
+  {UI_CMD_STOP_PLAYBACK,StopPlayback},
+  {UI_CMD_RESET_PROGRESS,ResetProgressBar},
+  {UI_CMD_UPDATE_PROGRESS,UpdateProgressBar}
 };
 
 /***
@@ -61,6 +66,7 @@ void InitUI(void){
     
   RingNextFile();
   drawListPointer(RingGetBufferPointer()) ;
+  ResetProgressBar((void*)0x0);
 }
 
 //-- Queue methods
@@ -87,7 +93,7 @@ void InitUIMessageQueue(void){
 * This is a client method to be called by other threads when they need to 
 * post an UI event
 */
-void PostUIQueueMessage(uint8_t cmd, void* p_data){
+void PostUIQueueMessage(uint8_t cmd, void* p_data, uint8_t dataSize){
     INT8U err;
     char buf[BUFSIZE];
     UIQMessage* msg = (UIQMessage*) OSMemGet(qMemManager, &err);
@@ -97,7 +103,12 @@ void PostUIQueueMessage(uint8_t cmd, void* p_data){
     }
     if(msg){
       msg->uiCommand = cmd;
-      msg->p_data = p_data;
+      //memcopy of the data to prevent potential contention between threads
+      char* msgBuffer = (char*)(&(msg->p_data));
+      char* data = (char*)p_data;
+      for(uint8_t i = 0; i < dataSize; i++){
+        msgBuffer[i] = data[i];
+      }
       OSQPost(uiQueue, msg);
     }
 }
@@ -162,3 +173,14 @@ void StopPlayback(void* p_data){
    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_STOP, OS_FLAG_SET, &err);
 }
 
+void ResetProgressBar(void* p_data){
+   char buf[BUFSIZE];
+   PrintWithBuf(buf, PRINTBUFMAX, "RESET_PROGRESS\n");
+   eraseProgressBar();
+}
+
+void UpdateProgressBar(void* p_data){
+   char buf[BUFSIZE];
+   PrintWithBuf(buf, PRINTBUFMAX, "UPDATE_PROGRESS %f\n", *((float*)p_data));
+   incrementProgressBar(*((float*)p_data));
+}

@@ -5,6 +5,7 @@
 #include "mp3Util.h"
 #include "MP3Player.h"
 #include "FileRing.h"
+#include "UIActions.h"
 
 static OS_FLAG_GRP* mp3Flags;        //Flag Group to control MP3 Player task
 static File dataFile;
@@ -43,6 +44,7 @@ OS_FLAG_GRP* GetMP3Flags(void){
   return mp3Flags;
 }
 
+#define PROGRESS_UPDATE_FREQUENCY 3000
 
 /***
 * MP3PlaybackTask can be in 
@@ -56,6 +58,8 @@ void Mp3PlaybackTask(void* pdata)
     char* fileName;
     INT8U mp3Buf[MP3_DECODER_BUF_SIZE];
     INT32U iBufPos = 0;
+    float playProgress = 0.0;
+    INT16U loopCount = 0;
     
     HANDLE hMp3 = InitDrivers();
     
@@ -120,6 +124,15 @@ void Mp3PlaybackTask(void* pdata)
       }
       //  play buffer
       Write(hMp3, mp3Buf, &iBufPos);
+      
+      //update progress bar every so often
+      if(loopCount >=PROGRESS_UPDATE_FREQUENCY){
+        playProgress = 1.0 * dataFile.position() / dataFile.size();
+        PostUIQueueMessage(UI_CMD_UPDATE_PROGRESS, &playProgress, sizeof(playProgress));
+        loopCount = 0;
+      }
+      else
+        loopCount++;
       
       //TODO:  update UI progress
       //  check for signals 
