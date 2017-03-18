@@ -57,7 +57,7 @@ char* RingPrevFile(void){
   INT8U err;
   char* res;
   OSMutexPend(ringMutex, 0, &err);
-  if(nameBufferPointer > 1)
+  if(nameBufferPointer > 0)
     nameBufferPointer--;
   else {
     nameBufferPointer = numFiles - 1;

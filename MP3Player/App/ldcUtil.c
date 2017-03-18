@@ -66,6 +66,7 @@ Adafruit_FT6206* initTouch(){
 #define LIST_START_X PADDING + 2*LINE_PADDING + (CHAR_HEIGHT * TEXT_SIZE)/2
 #define LIST_START_Y PADDING + 2 + LINE_PADDING
 #define TEXT_COLOR ILI9341_YELLOW
+#define BG_COLOR ILI9341_BLACK
 
 
 uint8_t pointerPos = 0;
@@ -114,14 +115,22 @@ void drawListElement(uint8_t elementPosition, char* elementName){
   while(*i) lcdCtrlObj.write(*i++);
 }
 
-void drawListPointer(uint8_t elementPosition){
+void _drawListPointer(uint8_t elementPosition, uint16_t color){
   int y = LIST_START_Y + (TEXT_SIZE * CHAR_HEIGHT + LINE_PADDING * 2) * elementPosition;
   lcdCtrlObj.drawTriangle(POINTER_X, y
                , POINTER_X + (CHAR_HEIGHT * TEXT_SIZE)/2, y + (CHAR_HEIGHT * TEXT_SIZE)/2
                , POINTER_X, y + (CHAR_HEIGHT * TEXT_SIZE)
-               , TEXT_COLOR);
+               , color);
   lcdCtrlObj.fillTriangle(POINTER_X, y
                , POINTER_X + (CHAR_HEIGHT * TEXT_SIZE)/2, y + (CHAR_HEIGHT * TEXT_SIZE)/2
                , POINTER_X, y + (CHAR_HEIGHT * TEXT_SIZE)
-               , TEXT_COLOR);
+               , color);
+}
+
+void drawListPointer(uint8_t elementPosition){
+  _drawListPointer(elementPosition, TEXT_COLOR);
+}
+
+void eraseListPointer(uint8_t elementPosition){
+  _drawListPointer(elementPosition, BG_COLOR);
 }

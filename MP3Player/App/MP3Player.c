@@ -1,9 +1,13 @@
 #include "bsp.h"
 #include "print.h"
+#include "bspMp3.h"
+#include "SD.h"
 #include "mp3Util.h"
 #include "MP3Player.h"
+#include "FileRing.h"
 
-OS_FLAG_GRP mp3Flags;        //Flag Group to control MP3 Player task
+static OS_FLAG_GRP* mp3Flags;        //Flag Group to control MP3 Player task
+static File dataFile;
 
 
 /***
@@ -35,28 +39,126 @@ HANDLE InitDrivers(){
     return hMp3;
 }
 
+OS_FLAG_GRP* GetMP3Flags(void){
+  return mp3Flags;
+}
+
+
 /***
 * MP3PlaybackTask can be in 
 *
 */
 void Mp3PlaybackTask(void* pdata)
 {
+    INT8U err_code;
     char buf[BUFSIZE];
+    uint8_t mp3State = MP3_STATE_STOPPED;
+    char* fileName;
+    INT8U mp3Buf[MP3_DECODER_BUF_SIZE];
+    INT32U iBufPos = 0;
+    
     HANDLE hMp3 = InitDrivers();
+    
+    mp3Flags = OSFlagCreate((OS_FLAGS)(0x00), &err_code);
+    if(err_code != OS_ERR_NONE){
+      	PrintWithBuf(buf, BUFSIZE, "Error while creating MP3Flags. Error code %u.\n", err_code);
+        while(1);
+    }
+    
     PrintWithBuf(buf, BUFSIZE, "Starting MP3 playback.\n");
 
     // Send initialization data to the MP3 decoder and run a test
     Mp3Init(hMp3);
-    int count = 0;
-    char* fileName="/MOUNT-01.MP3";
     
+    //loop forever
     while (1)
     {
-        OSTimeDly(500);
-        PrintWithBuf(buf, BUFSIZE, "Begin streaming sound file  count=%d\n", ++count);
-        //Mp3Stream(hMp3, (INT8U*)Train_Crossing, sizeof(Train_Crossing)); 
-        Mp3StreamSDFile(hMp3, fileName);
-        PrintWithBuf(buf, BUFSIZE, "Done streaming sound file  count=%d\n", count);
-    }
+      //  if state is Stopped
+      if(mp3State == MP3_STATE_STOPPED){
+        //      wait for the play signal
+        OSFlagPend(mp3Flags, MP3_CTRL_FLAG_PLAY, OS_FLAG_WAIT_SET_ANY + OS_FLAG_CONSUME, 0, &err_code);
+        //      change state to PLAYING
+        mp3State = MP3_STATE_PLAYING;
+        Mp3StreamInit(hMp3);
+        //      open the file
+        fileName = RingCurrentFile();
+        dataFile = SD.open(fileName, O_READ);
+        iBufPos = 0;
+        if (!dataFile) 
+        {
+            PrintWithBuf(buf, PRINTBUFMAX, "Error: could not open SD card file '%s'\n", fileName);
+            mp3State = MP3_STATE_STOPPED;
+            continue;
+        }
+        PrintWithBuf(buf, PRINTBUFMAX, "Starting file playback: '%s'\n", fileName);
+      }
+      //  if EOF
+      if(!dataFile.available()){
+        //     close file
+        dataFile.close();
+        //     if continuous play flag set
+        if(OSFlagAccept(mp3Flags, MP3_CTRL_FLAG_CONTINUOUS, OS_FLAG_WAIT_SET_ANY, &err_code)){
+          //          move ring buffer pointer
+          fileName = RingNextFile();
+          //TODO:          post Update UI message
+          //          open the file
+          dataFile = SD.open(fileName, O_READ);
+          iBufPos = 0;
+        }
+        //     else
+        else{
+          //          change state to Stopped
+          mp3State = MP3_STATE_STOPPED;
+          continue;
+        }
+      }
+      //  load buffer
+      iBufPos = 0;
+      while (dataFile.available() && iBufPos < MP3_DECODER_BUF_SIZE)
+      {
+            mp3Buf[iBufPos++] = dataFile.read();
+      }
+      //  play buffer
+      Write(hMp3, mp3Buf, &iBufPos);
+      
+      //TODO:  update UI progress
+      //  check for signals 
+      OS_FLAGS flags = OSFlagQuery(mp3Flags, &err_code);
+      //       if Stop signal received
+      if(flags & MP3_CTRL_FLAG_STOP){
+          //clear post flag
+          OSFlagAccept(mp3Flags, MP3_CTRL_FLAG_STOP, OS_FLAG_WAIT_SET_ANY + OS_FLAG_CONSUME, &err_code);
+          //          close the file
+          dataFile.close();
+          //          change state to Stopped
+          mp3State = MP3_STATE_STOPPED;
+          continue;
+      }
+      //       if Pause signal received
+      if(flags & MP3_CTRL_FLAG_PAUSE){
+          //clear pause flag
+          OSFlagAccept(mp3Flags, MP3_CTRL_FLAG_PAUSE, OS_FLAG_WAIT_SET_ANY + OS_FLAG_CONSUME, &err_code);
+          //          change state to Paused
+          mp3State = MP3_STATE_PAUSED;
+          //          wait for Play signal
+          OS_FLAGS flg = OSFlagPend(mp3Flags, MP3_CTRL_FLAG_PLAY + MP3_CTRL_FLAG_STOP, 
+                      OS_FLAG_WAIT_SET_ANY + OS_FLAG_CONSUME, 0, &err_code);
+          //          if Stop signal is received while paused
+          if(flg & MP3_CTRL_FLAG_STOP){
+            //          close the file
+            dataFile.close();
+            //          change state to Stopped
+            mp3State = MP3_STATE_STOPPED;
+          }
+          continue;
+      }
+      //       if Play signal received while playing do not consume the signal
+      if(flags & MP3_CTRL_FLAG_PLAY){
+        //          close current file
+        dataFile.close();
+        //          change state to Stopped and move on. 
+        mp3State = MP3_STATE_STOPPED;
+      }
+   }
 }
 

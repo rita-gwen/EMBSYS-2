@@ -23,4 +23,5 @@ Adafruit_GFX_Button** getButtonsList();
 void drawInterface();
 void drawListElement(uint8_t elementPosition, char* elementName);
 void drawListPointer(uint8_t elementPosition);
+void eraseListPointer(uint8_t elementPosition);
 

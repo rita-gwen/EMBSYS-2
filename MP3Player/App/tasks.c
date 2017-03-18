@@ -46,7 +46,7 @@ static OS_STK   Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE];
 
      
 // Task prototypes
-void LcdTouchDemoTask(void* pdata);
+void LcdTouchTask(void* pdata);
 void Mp3DemoTask(void* pdata);
 
 
@@ -115,7 +115,7 @@ void StartupTask(void* pdata)
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Creating the application tasks\n");
 
     // The maximum number of tasks the application can have is defined by OS_MAX_TASKS in os_cfg.h
-    OSTaskCreate(LcdTouchDemoTask, (void*)0, &LcdTouchDemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST2_PRIO);
+    OSTaskCreate(LcdTouchTask, (void*)0, &LcdTouchDemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST2_PRIO);
     OSTimeDly(3000); // Allow LCD to initialize before starting the playback task.
     OSTaskCreate(Mp3PlaybackTask, (void*)0, &Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST1_PRIO);
 
@@ -130,7 +130,7 @@ void StartupTask(void* pdata)
    Runs LCD/Touch demo code
 
 ************************************************************************************/
-void LcdTouchDemoTask(void* pdata)
+void LcdTouchTask(void* pdata)
 {
     char buf[BUFSIZE];
     lcdCtrl = initLcd();
@@ -164,6 +164,12 @@ void LcdTouchDemoTask(void* pdata)
         lcdCtrl->fillCircle(p.x, p.y, PENRADIUS, currentcolor);
         DispatchUIEvent(&p);
     }
+}
+
+/************************************************************************************/
+void UIUpdateTask(void* pdata)
+{
+  
 }
 /************************************************************************************
 

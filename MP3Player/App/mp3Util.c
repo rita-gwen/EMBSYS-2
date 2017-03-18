@@ -18,7 +18,7 @@ static File dataFile;
 
 extern BOOLEAN nextSong;
 
-static void Mp3StreamInit(HANDLE hMp3)
+void Mp3StreamInit(HANDLE hMp3)
 {
     INT32U length;
     
