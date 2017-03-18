@@ -4,8 +4,8 @@
 #define BUFSIZE 256
 
 
-Adafruit_ILI9341 lcdCtrlObj = Adafruit_ILI9341(); // The LCD controller
-Adafruit_FT6206 touchCtrlObj = Adafruit_FT6206(); // The touch controller
+static Adafruit_ILI9341 lcdCtrlObj = Adafruit_ILI9341(); // The LCD controller
+static Adafruit_FT6206 touchCtrlObj = Adafruit_FT6206(); // The touch controller
 
 //UI objects
 Adafruit_GFX_Button btnStart = Adafruit_GFX_Button();
@@ -48,6 +48,11 @@ Adafruit_ILI9341* initLcd(){
     return &lcdCtrlObj;
 }
 
+//accessor function mostly for debugging purposes.
+Adafruit_ILI9341* getLcdCtrl(){
+    return &lcdCtrlObj;
+}
+
 Adafruit_FT6206* initTouch(){
     touchCtrlObj.begin();
     return &touchCtrlObj;
@@ -55,6 +60,7 @@ Adafruit_FT6206* initTouch(){
 
 //Page layout parameters
 #define LIST_AREA_HEIGHT 220
+#define BUTTON_AREA_START 240
 #define PADDING 4
 #define BUTTON_WIDTH (ILI9341_TFTWIDTH - 3*PADDING)/2
 #define BUTTON_HEIGHT (ILI9341_TFTHEIGHT - LIST_AREA_HEIGHT - 3*PADDING)/2

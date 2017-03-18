@@ -1,5 +1,5 @@
 #include "lcdUtil.h"
 
-
-void InitUI(void);
-void DispatchUIEvent(TS_Point* touchPoint);
+void InitUIMessageQueue(void);
+void PostUIQueueMessage(uint8_t cmd, void* p_data);
+void UIDispatcherTask(void* p_data);

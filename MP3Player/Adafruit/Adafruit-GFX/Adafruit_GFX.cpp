@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "Adafruit_GFX.h"
 #include "glcdfont.c"
 
-void PrintToLcdWithBuf(char *buf, int size, char *format, ...);
+//void PrintToLcdWithBuf(char *buf, int size, char *format, ...);
 #define BUTTONBUFSIZE 16
 char buttonBuf[BUTTONBUFSIZE];
 
@@ -602,7 +602,9 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
    _gfx->setTextColor(text);
    _gfx->setTextSize(_textsize);
    //_gfx->print(_label);
-   PrintToLcdWithBuf(buttonBuf, BUTTONBUFSIZE, _label);
+   char* i =_label;
+   while(*i)_gfx->write(*i++);
+//   PrintToLcdWithBuf(buttonBuf, BUTTONBUFSIZE, _label);
    //while(1); // Need to implement print
  }
 

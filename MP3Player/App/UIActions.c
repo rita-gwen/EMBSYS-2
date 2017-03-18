@@ -15,15 +15,30 @@ All harware/software initializations should be done beforehand
 #include "FileRing.h"
 #include "MP3Player.h"
 
+#define MAX_UI_QUEUE_SIZE 10
 
-void MovePointerUp(TS_Point* touchPoint);
-void MovePointerDown(TS_Point* touchPoint);
-void StartPlayback(TS_Point* touchPoint);
-void StopPlayback(TS_Point* touchPoint);
+//-- Message queue definitions
+typedef struct {
+  uint8_t uiCommand;
+  void* p_data;         //additional data to pass with the command if required.
+} UIQMessage;
+
+UIQMessage qMessageMemory[MAX_UI_QUEUE_SIZE];   //the block of memory to use for queue messages
+UIQMessage* qEntries[MAX_UI_QUEUE_SIZE];
+
+static OS_MEM* qMemManager;        //queue memory manager
+static OS_EVENT* uiQueue;
+
+
+//-- Commands list definitions
+void MovePointerUp(void* p_data);
+void MovePointerDown(void* p_data);
+void StartPlayback(void* p_data);
+void StopPlayback(void* p_data);
 
 struct UICommandAction{
   uint8_t uiCommand;
-  void (*action)(TS_Point* touchPoint);
+  void (*action)(void* p_data);
 };
 
 UICommandAction ui_commands[UI_MAXCOMMANDS] = {
@@ -33,6 +48,9 @@ UICommandAction ui_commands[UI_MAXCOMMANDS] = {
   {UI_CMD_STOP_PLAYBACK,StopPlayback}
 };
 
+/***
+* Draw the UI objects on the screen
+*/
 void InitUI(void){
   drawInterface();
 
@@ -45,23 +63,73 @@ void InitUI(void){
   drawListPointer(RingGetBufferPointer()) ;
 }
 
-void DispatchUIEvent(TS_Point* touchPoint){
-  char buf[BUFSIZE];
-  Adafruit_GFX_Button** buttons = getButtonsList();
-  for(uint8_t i = 0; i < UI_MAXCOMMANDS; i++){          //loop through UI elements
-    if(buttons[i]->contains(touchPoint->x, touchPoint->y)){
-      for(uint8_t j = 0; j < UI_MAXCOMMANDS; j++){      //loop though commands list
-        if(buttons[i]->getCommand() == ui_commands[j].uiCommand){
-          ui_commands[j].action(touchPoint);
-          return;
-        }
-      }
-      PrintWithBuf(buf, PRINTBUFMAX, "Unknown command: %u\n", buttons[i]->getCommand());
+//-- Queue methods
+/***
+* Create the message queue. This should be called from the startup task to make sure 
+* the queue is available by the time other tasks start running
+*/
+void InitUIMessageQueue(void){
+    INT8U err;
+    char buf[BUFSIZE];
+    qMemManager = OSMemCreate(qMessageMemory, MAX_UI_QUEUE_SIZE, sizeof(UIQMessage), &err);
+    if(err != OS_ERR_NONE){
+      	PrintWithBuf(buf, BUFSIZE, "Error while creating UI queue memory partition. Error code %u.\n", err);
+        while(1);
     }
-  }
+    uiQueue = OSQCreate((void**)qEntries, MAX_UI_QUEUE_SIZE);
+    if(!uiQueue){
+      	PrintWithBuf(buf, BUFSIZE, "Cannot create UI queue.\n");
+        while(1);
+    }
 }
 
-void MovePointerUp(TS_Point* touchPoint){
+/***
+* This is a client method to be called by other threads when they need to 
+* post an UI event
+*/
+void PostUIQueueMessage(uint8_t cmd, void* p_data){
+    INT8U err;
+    char buf[BUFSIZE];
+    UIQMessage* msg = (UIQMessage*) OSMemGet(qMemManager, &err);
+    if(err != OS_ERR_NONE){
+      	PrintWithBuf(buf, BUFSIZE, "Error while allocating memory for UI queue message. Error code %u.\n", err);
+        while(1);
+    }
+    if(msg){
+      msg->uiCommand = cmd;
+      msg->p_data = p_data;
+      OSQPost(uiQueue, msg);
+    }
+}
+
+void UIDispatcherTask(void* p_data){
+    INT8U err;
+    char buf[BUFSIZE];
+    initLcd();
+    PrintWithBuf(buf, BUFSIZE, "Initializing FT6206 touchscreen controller\n");
+    InitUI();
+    
+    while(1){
+      UIQMessage* msg = (UIQMessage*)OSQPend(uiQueue, 0, &err); //wait for the next message to process
+      if (err != OS_ERR_NONE){
+        PrintWithBuf(buf, PRINTBUFMAX, "Error pulling a message from the UI queue: %d\n", err);
+        while(1);
+      }
+      uint8_t isValidCmd = 0;
+      for(uint8_t j = 0; j < UI_MAXCOMMANDS; j++){      //loop though commands list to find the command handler
+        if(msg->uiCommand == ui_commands[j].uiCommand){
+          ui_commands[j].action(msg->p_data);
+          isValidCmd = 1;
+          break;
+        }
+      }
+      if(!isValidCmd)
+        PrintWithBuf(buf, PRINTBUFMAX, "Unknown command: %u\n", msg->uiCommand);
+      OSMemPut(qMemManager, msg);       //returning queue message back to the memory pool
+    }
+}
+
+void MovePointerUp(void* p_data){
    char buf[BUFSIZE];
    PrintWithBuf(buf, PRINTBUFMAX, "UP\n");
 
@@ -70,7 +138,7 @@ void MovePointerUp(TS_Point* touchPoint){
    drawListPointer(RingGetBufferPointer()) ;
 }
 
-void MovePointerDown(TS_Point* touchPoint){
+void MovePointerDown(void* p_data){
    char buf[BUFSIZE];
    PrintWithBuf(buf, PRINTBUFMAX, "DOWN\n");
    eraseListPointer(RingGetBufferPointer());
@@ -78,7 +146,7 @@ void MovePointerDown(TS_Point* touchPoint){
    drawListPointer(RingGetBufferPointer()) ;
 }
 
-void StartPlayback(TS_Point* touchPoint){
+void StartPlayback(void* p_data){
    char buf[BUFSIZE];
    INT8U err;
    PrintWithBuf(buf, PRINTBUFMAX, "START\n");
@@ -86,10 +154,11 @@ void StartPlayback(TS_Point* touchPoint){
    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PLAY, OS_FLAG_SET, &err);
 }
 
-void StopPlayback(TS_Point* touchPoint){
+void StopPlayback(void* p_data){
    char buf[BUFSIZE];
    INT8U err;
    PrintWithBuf(buf, PRINTBUFMAX, "STOP\n");
    OS_FLAG_GRP* mp3Flags = GetMP3Flags();
    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_STOP, OS_FLAG_SET, &err);
 }
+

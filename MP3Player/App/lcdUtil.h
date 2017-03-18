@@ -16,6 +16,7 @@
 
 Adafruit_ILI9341* initLcd();
 Adafruit_FT6206* initTouch();
+Adafruit_ILI9341* getLcdCtrl();
 
 #endif
 

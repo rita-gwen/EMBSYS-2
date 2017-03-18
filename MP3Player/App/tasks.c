@@ -31,9 +31,6 @@ long MapTouchToScreen(long x, long in_min, long in_max, long out_min, long out_m
 }
 
 
-#include "train_crossing.h"
-
-
 /************************************************************************************
 
    Allocate the stacks for each task.
@@ -41,23 +38,20 @@ long MapTouchToScreen(long x, long in_min, long in_max, long out_min, long out_m
 
 ************************************************************************************/
 
-static OS_STK   LcdTouchDemoTaskStk[APP_CFG_TASK_START_STK_SIZE];
-static OS_STK   Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE];
-
+static OS_STK   LcdTouchTaskStk[APP_CFG_TASK_START_STK_SIZE];
+static OS_STK   Mp3PlayerTaskStk[APP_CFG_TASK_START_STK_SIZE];
+static OS_STK   UIDispatcherTaskStk[APP_CFG_TASK_START_STK_SIZE];
      
 // Task prototypes
 void LcdTouchTask(void* pdata);
-void Mp3DemoTask(void* pdata);
-
-
 
 // Useful functions
 void PrintToLcdWithBuf(char *buf, int size, char *format, ...);
 
 // Globals
 BOOLEAN nextSong = OS_FALSE;
-Adafruit_ILI9341* lcdCtrl;
-Adafruit_FT6206*  touchCtrl;
+static Adafruit_FT6206*  touchCtrl;
+static Adafruit_ILI9341* lcdCtrl;
 
 
 /************************************************************************************
@@ -78,17 +72,19 @@ void StartupTask(void* pdata)
 	PrintWithBuf(buf, BUFSIZE, "StartupTask: Begin\n");
 	PrintWithBuf(buf, BUFSIZE, "StartupTask: Starting timer tick\n");
 
-    // Start the system tick
+    // Low-level initializations:
+    //   Start the system tick
     OS_CPU_SysTickInit(OS_TICKS_PER_SEC);
-    
+    //   Congigure touch screen EXTI interrupt
     Init_TouchInterrupt();
     
-    // Initialize SD card
+    // Initialize SD card PJDF drivers
     PrintWithBuf(buf, PRINTBUFMAX, "Opening handle to SD driver: %s\n", PJDF_DEVICE_ID_SD_ADAFRUIT);
     hSD = Open(PJDF_DEVICE_ID_SD_ADAFRUIT, 0);
-    if (!PJDF_IS_VALID_HANDLE(hSD)) while(1);
-
-    PrintWithBuf(buf, PRINTBUFMAX, "Unknown command: %s\n", SD_SPI_DEVICE_ID);
+    if (!PJDF_IS_VALID_HANDLE(hSD)){
+      PrintWithBuf(buf, PRINTBUFMAX, "Error initializing SD driver: %d\n", hSD);
+      while(1);
+    }
     // We talk to the SD controller over a SPI interface therefore
     // open an instance of that SPI driver and pass the handle to 
     // the SD driver.
@@ -99,25 +95,27 @@ void StartupTask(void* pdata)
     pjdfErr = Ioctl(hSD, PJDF_CTRL_SD_SET_SPI_HANDLE, &hSPI, &length);
     if(PJDF_IS_ERROR(pjdfErr)) while(1);
     
-    //Attempting to read the content of SD card root dir and print it to the console
-    
+    //Initialize FAT32 subsystem and load the root dir into the ring buffer
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Opening the SD card.\n");
     SD.begin(hSD);      
-
     if(InitRing() != OS_ERR_NONE){
       PrintWithBuf(buf, BUFSIZE, "Cannot initialize the ring buffer.\n");
       while(1);
     }
-     
     RingLoadFiles();    //Load file names into the ring buffer
+    
+    //Initi UI message queue for the UI dispatcher
+    InitUIMessageQueue();
 
-    // Create the test tasks
+
+    // Create the application tasks
     PrintWithBuf(buf, BUFSIZE, "StartupTask: Creating the application tasks\n");
 
     // The maximum number of tasks the application can have is defined by OS_MAX_TASKS in os_cfg.h
-    OSTaskCreate(LcdTouchTask, (void*)0, &LcdTouchDemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST2_PRIO);
-    OSTimeDly(3000); // Allow LCD to initialize before starting the playback task.
-    OSTaskCreate(Mp3PlaybackTask, (void*)0, &Mp3DemoTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST1_PRIO);
+    OSTaskCreate(UIDispatcherTask, (void*)0, &UIDispatcherTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST3_PRIO);
+    OSTaskCreate(LcdTouchTask, (void*)0, &LcdTouchTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST2_PRIO);
+    OSTimeDly(500); // Allow LCD to initialize before starting the playback task.
+    OSTaskCreate(Mp3PlaybackTask, (void*)0, &Mp3PlayerTaskStk[APP_CFG_TASK_START_STK_SIZE-1], APP_TASK_TEST1_PRIO);
 
     // Delete ourselves, letting the work be done in the new tasks.
     PrintWithBuf(buf, BUFSIZE, "StartupTask: deleting self\n");
@@ -133,11 +131,9 @@ void StartupTask(void* pdata)
 void LcdTouchTask(void* pdata)
 {
     char buf[BUFSIZE];
-    lcdCtrl = initLcd();
     touchCtrl = initTouch();
+    lcdCtrl = getLcdCtrl();
 
-    InitUI();
-    
     PrintWithBuf(buf, BUFSIZE, "Initializing FT6206 touchscreen controller\n");
     
     int currentcolor = ILI9341_RED;
@@ -162,84 +158,14 @@ void LcdTouchTask(void* pdata)
         p.y = MapTouchToScreen(rawPoint.y, 0, ILI9341_TFTHEIGHT, ILI9341_TFTHEIGHT, 0);
         
         lcdCtrl->fillCircle(p.x, p.y, PENRADIUS, currentcolor);
-        DispatchUIEvent(&p);
+        Adafruit_GFX_Button** buttons = getButtonsList();
+        for(uint8_t i = 0; i < UI_MAXCOMMANDS; i++){          //loop through UI elements
+          if(buttons[i]->contains(p.x, p.y)){
+            //when UI element is identified post the associated command into the 
+            //UI message queue
+            PostUIQueueMessage(buttons[i]->getCommand(), &p);
+            break;
+          }
+        }
     }
 }
-
-/************************************************************************************/
-void UIUpdateTask(void* pdata)
-{
-  
-}
-/************************************************************************************
-
-   Runs MP3 demo code
-
-************************************************************************************/
-void Mp3DemoTask(void* pdata)
-{
-    PjdfErrCode pjdfErr;
-    INT32U length;
-
-    OSTimeDly(2000); // Allow other task to initialize LCD before we use it.
-    
-	char buf[BUFSIZE];
-	PrintWithBuf(buf, BUFSIZE, "Mp3DemoTask: starting\n");
-
-	PrintWithBuf(buf, BUFSIZE, "Opening MP3 driver: %s\n", PJDF_DEVICE_ID_MP3_VS1053);
-    // Open handle to the MP3 decoder driver
-    HANDLE hMp3 = Open(PJDF_DEVICE_ID_MP3_VS1053, 0);
-    if (!PJDF_IS_VALID_HANDLE(hMp3)) while(1);
-
-	PrintWithBuf(buf, BUFSIZE, "Opening MP3 SPI driver: %s\n", MP3_SPI_DEVICE_ID);
-    // We talk to the MP3 decoder over a SPI interface therefore
-    // open an instance of that SPI driver and pass the handle to 
-    // the MP3 driver.
-    HANDLE hSPI = Open(MP3_SPI_DEVICE_ID, 0);
-    if (!PJDF_IS_VALID_HANDLE(hSPI)) while(1);
-
-    length = sizeof(HANDLE);
-    pjdfErr = Ioctl(hMp3, PJDF_CTRL_MP3_SET_SPI_HANDLE, &hSPI, &length);
-    if(PJDF_IS_ERROR(pjdfErr)) while(1);
-
-    // Send initialization data to the MP3 decoder and run a test
-	PrintWithBuf(buf, BUFSIZE, "Starting MP3 device test\n");
-        
-    Mp3Init(hMp3);
-    int count = 0;
-    char* fileName="/MOUNT-01.MP3";
-    
-    while (1)
-    {
-        OSTimeDly(500);
-        PrintWithBuf(buf, BUFSIZE, "Begin streaming sound file  count=%d\n", ++count);
-        //Mp3Stream(hMp3, (INT8U*)Train_Crossing, sizeof(Train_Crossing)); 
-        Mp3StreamSDFile(hMp3, fileName);
-        PrintWithBuf(buf, BUFSIZE, "Done streaming sound file  count=%d\n", count);
-    }
-}
-
-
-// Renders a character at the current cursor position on the LCD
-static void PrintCharToLcd(char c)
-{
-    lcdCtrl->write(c);
-}
-
-/************************************************************************************
-
-   Print a formated string with the given buffer to LCD.
-   Each task should use its own buffer to prevent data corruption.
-
-************************************************************************************/
-void PrintToLcdWithBuf(char *buf, int size, char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    PrintToDeviceWithBuf(PrintCharToLcd, buf, size, format, args);
-    va_end(args);
-}
-
-
-
-
