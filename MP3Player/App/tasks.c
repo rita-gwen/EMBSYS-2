@@ -164,6 +164,8 @@ void LcdTouchTask(void* pdata)
             //when UI element is identified post the associated command into the 
             //UI message queue
             PostUIQueueMessage(buttons[i]->getCommand(), &p, sizeof(p));
+            buttons[i]->drawButton(true);
+            buttons[i]->drawButton(false);
             break;
           }
         }

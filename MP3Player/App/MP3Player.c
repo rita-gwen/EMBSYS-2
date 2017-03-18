@@ -79,6 +79,8 @@ void Mp3PlaybackTask(void* pdata)
     {
       //  if state is Stopped
       if(mp3State == MP3_STATE_STOPPED){
+        playProgress = 0.0;
+        PostUIQueueMessage(UI_CMD_RESET_PROGRESS, &playProgress, sizeof(playProgress));
         //      wait for the play signal
         OSFlagPend(mp3Flags, MP3_CTRL_FLAG_PLAY, OS_FLAG_WAIT_SET_ANY + OS_FLAG_CONSUME, 0, &err_code);
         //      change state to PLAYING

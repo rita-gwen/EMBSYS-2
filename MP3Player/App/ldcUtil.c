@@ -148,7 +148,7 @@ void eraseListPointer(uint8_t elementPosition){
 static float progressBarPosition = 0.0;
 
 void eraseProgressBar(){
-  lcdCtrlObj.drawRect(PADDING, PROGRESS_START_Y
+  lcdCtrlObj.fillRect(PADDING, PROGRESS_START_Y
                       , ILI9341_TFTWIDTH - PADDING*2, PROGRESS_HEIGHT
                       , BG_COLOR);
   progressBarPosition = 0.0;
