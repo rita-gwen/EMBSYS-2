@@ -45,6 +45,10 @@ OS_FLAG_GRP* GetMP3Flags(void){
 }
 
 #define PROGRESS_UPDATE_FREQUENCY 3000
+#define MP3_DECODER_STARTUP_SIZE  1024
+
+static  INT8U mp3Buf[MP3_DECODER_STARTUP_SIZE];
+
 
 /***
 * MP3PlaybackTask can be in 
@@ -56,7 +60,6 @@ void Mp3PlaybackTask(void* pdata)
     char buf[BUFSIZE];
     uint8_t mp3State = MP3_STATE_STOPPED;
     char* fileName;
-    INT8U mp3Buf[MP3_DECODER_BUF_SIZE];
     INT32U iBufPos = 0;
     float playProgress = 0.0;
     INT16U loopCount = 0;
@@ -97,6 +100,13 @@ void Mp3PlaybackTask(void* pdata)
             continue;
         }
         PrintWithBuf(buf, PRINTBUFMAX, "Starting file playback: '%s'\n", fileName);
+        //Initial player burst to speed up the playback startup
+        for(uint8_t i = 0; i< 170; i++){
+          iBufPos = dataFile.read(mp3Buf, MP3_DECODER_STARTUP_SIZE);
+          //  play buffer
+          Write(hMp3, mp3Buf, &iBufPos);
+        }
+        
       }
       //  if EOF
       if(!dataFile.available()){
@@ -119,11 +129,8 @@ void Mp3PlaybackTask(void* pdata)
         }
       }
       //  load buffer
-      iBufPos = 0;
-      while (dataFile.available() && iBufPos < MP3_DECODER_BUF_SIZE)
-      {
-            mp3Buf[iBufPos++] = dataFile.read();
-      }
+      iBufPos = dataFile.read(mp3Buf, MP3_DECODER_BUF_SIZE);
+      
       //  play buffer
       Write(hMp3, mp3Buf, &iBufPos);
       
