@@ -13,8 +13,10 @@ Adafruit_GFX_Button btnStart = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnStop = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnUp = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnDown = Adafruit_GFX_Button();
+Adafruit_GFX_Button btnPause = Adafruit_GFX_Button();
+Adafruit_GFX_Button btnShuffle = Adafruit_GFX_Button();
 
-Adafruit_GFX_Button* buttons[4] = {&btnStart, &btnStop, &btnUp, &btnDown};
+Adafruit_GFX_Button* buttons[UI_MAX_BUTTONS] = {&btnStart, &btnStop, &btnUp, &btnDown, &btnPause, &btnShuffle};
 
 Adafruit_GFX_Button** getButtonsList(){
   return buttons;
@@ -60,13 +62,15 @@ Adafruit_FT6206* initTouch(){
 }
 
 //Page layout parameters
-#define LIST_AREA_HEIGHT 220
-#define BUTTON_AREA_START_Y 240
+#define LIST_AREA_HEIGHT 200
+#define BUTTON_AREA_START_Y 220
 #define PADDING 4
+#define BUTTONS_HACROSS 3
+#define BUTTONS_VACROSS 2
 #define PROGRESS_START_Y LIST_AREA_HEIGHT + PADDING
 #define PROGRESS_HEIGHT BUTTON_AREA_START_Y - LIST_AREA_HEIGHT - PADDING
-#define BUTTON_WIDTH (ILI9341_TFTWIDTH - 3*PADDING)/2
-#define BUTTON_HEIGHT (ILI9341_TFTHEIGHT - BUTTON_AREA_START_Y - 3*PADDING)/2
+#define BUTTON_WIDTH (ILI9341_TFTWIDTH - (BUTTONS_HACROSS + 1)*PADDING)/BUTTONS_HACROSS
+#define BUTTON_HEIGHT (ILI9341_TFTHEIGHT - BUTTON_AREA_START_Y - (BUTTONS_VACROSS + 1)*PADDING)/BUTTONS_VACROSS
 #define CHAR_WIDTH 6
 #define CHAR_HEIGHT 8
 #define LINE_PADDING 2
@@ -93,6 +97,8 @@ void drawInterface(){
   char* txtStop = "Stop";
   char* txtUp = "Up";
   char* txtDown = "Down";
+  char* txtPause = "Pause";
+  char* txtShuffle = "Shuff";
   btnStart.initButton(&lcdCtrlObj, PADDING, BUTTON_AREA_START_Y + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
@@ -103,12 +109,23 @@ void drawInterface(){
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtStop, TEXT_SIZE, UI_CMD_STOP_PLAYBACK);
   btnStop.drawButton(false);
-  btnUp.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + PADDING
+  
+  btnPause.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + PADDING
+                        , BUTTON_WIDTH, BUTTON_HEIGHT
+                        , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
+                        , txtPause, TEXT_SIZE, UI_CMD_PAUSE_PLAYBACK);
+  btnPause.drawButton(false);
+  btnShuffle.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
+                        , BUTTON_WIDTH, BUTTON_HEIGHT
+                        , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
+                        , txtShuffle, TEXT_SIZE, UI_CMD_MOVE_DOWN);
+  btnShuffle.drawButton(false);
+  btnUp.initButton(&lcdCtrlObj, 3*PADDING + 2*BUTTON_WIDTH, BUTTON_AREA_START_Y + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtUp, TEXT_SIZE, UI_CMD_MOVE_UP);
   btnUp.drawButton(false);
-  btnDown.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
+  btnDown.initButton(&lcdCtrlObj, 3*PADDING + 2*BUTTON_WIDTH, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtDown, TEXT_SIZE, UI_CMD_MOVE_DOWN);
@@ -155,9 +172,9 @@ void eraseProgressBar(){
 }
 
 void incrementProgressBar(float p_progressPct){
-  uint16_t currentPix = floor((ILI9341_TFTWIDTH - PADDING*2) * progressBarPosition);
+  uint16_t currentPix = (uint16_t)floor((ILI9341_TFTWIDTH - PADDING*2) * progressBarPosition);
   progressBarPosition = p_progressPct;
-  uint16_t newPix = floor((ILI9341_TFTWIDTH - PADDING*2) * progressBarPosition);  
+  uint16_t newPix = (uint16_t)floor((ILI9341_TFTWIDTH - PADDING*2) * progressBarPosition);  
   lcdCtrlObj.fillRect(PADDING, PROGRESS_START_Y
                       , newPix, PROGRESS_HEIGHT
                       , PROGRESS_COLOR);  

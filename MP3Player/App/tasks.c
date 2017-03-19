@@ -157,15 +157,14 @@ void LcdTouchTask(void* pdata)
         p.x = MapTouchToScreen(rawPoint.x, 0, ILI9341_TFTWIDTH, ILI9341_TFTWIDTH, 0);
         p.y = MapTouchToScreen(rawPoint.y, 0, ILI9341_TFTHEIGHT, ILI9341_TFTHEIGHT, 0);
         
-        lcdCtrl->fillCircle(p.x, p.y, PENRADIUS, currentcolor);
+//        lcdCtrl->fillCircle(p.x, p.y, PENRADIUS, currentcolor);
         Adafruit_GFX_Button** buttons = getButtonsList();
-        for(uint8_t i = 0; i < UI_MAXCOMMANDS; i++){          //loop through UI elements
+        for(uint8_t i = 0; i < UI_MAX_BUTTONS; i++){          //loop through UI elements
           if(buttons[i]->contains(p.x, p.y)){
             //when UI element is identified post the associated command into the 
             //UI message queue
             PostUIQueueMessage(buttons[i]->getCommand(), &p, sizeof(p));
-            buttons[i]->drawButton(true);
-            buttons[i]->drawButton(false);
+            buttons[i]->blinkOutline();
             break;
           }
         }

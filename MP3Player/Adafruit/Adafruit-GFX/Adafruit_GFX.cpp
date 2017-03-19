@@ -608,6 +608,11 @@ void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
    //while(1); // Need to implement print
  }
 
+void Adafruit_GFX_Button::blinkOutline(){
+   _gfx->drawRoundRect(_x, _y, _w, _h, min(_w,_h)/6, ~_outlinecolor);
+   _gfx->drawRoundRect(_x, _y, _w, _h, min(_w,_h)/6, _outlinecolor);
+}
+
 boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
    if ((x < (_x)) || (x > (_x + _w))) return false;
    if ((y < (_y)) || (y > (_y + _h))) return false;

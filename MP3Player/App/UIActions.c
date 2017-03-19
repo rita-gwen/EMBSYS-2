@@ -184,3 +184,14 @@ void UpdateProgressBar(void* p_data){
    PrintWithBuf(buf, PRINTBUFMAX, "UPDATE_PROGRESS %f\n", *((float*)p_data));
    incrementProgressBar(*((float*)p_data));
 }
+
+void PausePlayback(void* p_data){
+   char buf[BUFSIZE];
+   INT8U err;
+   OS_FLAG_GRP* mp3Flags = GetMP3Flags();
+   OS_FLAGS flgs = OSFlagQuery(mp3Flags, &err);
+   if(flgs & MP3_CTRL_FLAG_PAUSE)
+    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PAUSE, OS_FLAG_CLR, &err);
+   else
+    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PAUSE, OS_FLAG_SET, &err);
+}

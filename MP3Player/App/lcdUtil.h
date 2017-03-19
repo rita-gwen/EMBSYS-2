@@ -11,7 +11,10 @@
 #define UI_CMD_STOP_PLAYBACK   0x4
 #define UI_CMD_UPDATE_PROGRESS  0x5
 #define UI_CMD_RESET_PROGRESS   0x6
+#define UI_CMD_PAUSE_PLAYBACK   0x7
+#define UI_CMD_SHUFFLE_TOGGLE   0x8
 
+#define UI_MAX_BUTTONS 6u
 
 #ifndef LCDUTIL_H
 #define LCDUTIL_H

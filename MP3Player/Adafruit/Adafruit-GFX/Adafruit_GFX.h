@@ -108,6 +108,7 @@ class Adafruit_GFX_Button {
   boolean justPressed();
   boolean justReleased();
   uint8_t getCommand();
+  void blinkOutline();
 
  private:
   Adafruit_GFX *_gfx;
