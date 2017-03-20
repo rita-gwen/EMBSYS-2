@@ -14,9 +14,9 @@ Adafruit_GFX_Button btnStop = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnUp = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnDown = Adafruit_GFX_Button();
 Adafruit_GFX_Button btnPause = Adafruit_GFX_Button();
-Adafruit_GFX_Button btnShuffle = Adafruit_GFX_Button();
+Adafruit_GFX_Button btnContinuous = Adafruit_GFX_Button();
 
-Adafruit_GFX_Button* buttons[UI_MAX_BUTTONS] = {&btnStart, &btnStop, &btnUp, &btnDown, &btnPause, &btnShuffle};
+Adafruit_GFX_Button* buttons[UI_MAX_BUTTONS] = {&btnStart, &btnStop, &btnUp, &btnDown, &btnPause, &btnContinuous};
 
 Adafruit_GFX_Button** getButtonsList(){
   return buttons;
@@ -98,7 +98,7 @@ void drawInterface(){
   char* txtUp = "Up";
   char* txtDown = "Down";
   char* txtPause = "Pause";
-  char* txtShuffle = "Shuff";
+  char* txtContinuous = "Cont.";
   btnStart.initButton(&lcdCtrlObj, PADDING, BUTTON_AREA_START_Y + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
@@ -115,11 +115,11 @@ void drawInterface(){
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
                         , txtPause, TEXT_SIZE, UI_CMD_PAUSE_PLAYBACK);
   btnPause.drawButton(false);
-  btnShuffle.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
+  btnContinuous.initButton(&lcdCtrlObj, 2*PADDING + BUTTON_WIDTH, BUTTON_AREA_START_Y + 2* PADDING + BUTTON_HEIGHT
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
-                        , txtShuffle, TEXT_SIZE, UI_CMD_MOVE_DOWN);
-  btnShuffle.drawButton(false);
+                        , txtContinuous, TEXT_SIZE, UI_CMD_CONTINUOUS_TOGGLE);
+  btnContinuous.drawButton(false);
   btnUp.initButton(&lcdCtrlObj, 3*PADDING + 2*BUTTON_WIDTH, BUTTON_AREA_START_Y + PADDING
                         , BUTTON_WIDTH, BUTTON_HEIGHT
                         , ILI9341_CYAN, ILI9341_NAVY, ILI9341_CYAN
@@ -178,4 +178,13 @@ void incrementProgressBar(float p_progressPct){
   lcdCtrlObj.fillRect(PADDING, PROGRESS_START_Y
                       , newPix, PROGRESS_HEIGHT
                       , PROGRESS_COLOR);  
+}
+
+
+void toggleContinuousBtn(bool isContinuous){
+  btnContinuous.drawButton(!isContinuous);
+}
+
+void togglePauseBtn(bool isPaused){
+  btnPause.drawButton(!isPaused);
 }

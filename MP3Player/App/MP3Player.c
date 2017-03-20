@@ -44,12 +44,16 @@ OS_FLAG_GRP* GetMP3Flags(void){
   return mp3Flags;
 }
 
-#define PROGRESS_UPDATE_FREQUENCY 3000
+#define PROGRESS_UPDATE_FREQUENCY 200
 #define MP3_DECODER_STARTUP_SIZE  1024
 
 static  INT8U mp3Buf[MP3_DECODER_STARTUP_SIZE];
+static  uint8_t mp3State = MP3_STATE_STOPPED;
 
-
+uint8_t getMp3PlayerStatus(){
+    return mp3State;
+}
+  
 /***
 * MP3PlaybackTask can be in 
 *
@@ -58,7 +62,6 @@ void Mp3PlaybackTask(void* pdata)
 {
     INT8U err_code;
     char buf[BUFSIZE];
-    uint8_t mp3State = MP3_STATE_STOPPED;
     char* fileName;
     INT32U iBufPos = 0;
     float playProgress = 0.0;
@@ -101,7 +104,7 @@ void Mp3PlaybackTask(void* pdata)
         }
         PrintWithBuf(buf, PRINTBUFMAX, "Starting file playback: '%s'\n", fileName);
         //Initial player burst to speed up the playback startup
-        for(uint8_t i = 0; i< 170; i++){
+        for(uint8_t i = 0; i< 2; i++){
           iBufPos = dataFile.read(mp3Buf, MP3_DECODER_STARTUP_SIZE);
           //  play buffer
           Write(hMp3, mp3Buf, &iBufPos);
@@ -112,21 +115,16 @@ void Mp3PlaybackTask(void* pdata)
       if(!dataFile.available()){
         //     close file
         dataFile.close();
+        mp3State = MP3_STATE_STOPPED;
         //     if continuous play flag set
         if(OSFlagAccept(mp3Flags, MP3_CTRL_FLAG_CONTINUOUS, OS_FLAG_WAIT_SET_ANY, &err_code)){
-          //          move ring buffer pointer
-          fileName = RingNextFile();
-          //TODO:          post Update UI message
-          //          open the file
-          dataFile = SD.open(fileName, O_READ);
-          iBufPos = 0;
-        }
-        //     else
-        else{
-          //          change state to Stopped
-          mp3State = MP3_STATE_STOPPED;
+          OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PLAY, OS_FLAG_SET, &err_code); 
+          //post Update UI message
+          PostUIQueueMessage(UI_CMD_MOVE_DOWN, (void*)0x0, 0u);
+          OSTimeDly(500); //Let the UI to process MOve Down command
           continue;
         }
+        continue;
       }
       //  load buffer
       iBufPos = dataFile.read(mp3Buf, MP3_DECODER_BUF_SIZE);
@@ -172,6 +170,9 @@ void Mp3PlaybackTask(void* pdata)
             //          change state to Stopped
             mp3State = MP3_STATE_STOPPED;
           }
+          if(flg & MP3_CTRL_FLAG_PLAY)
+            mp3State = MP3_STATE_PLAYING;
+          
           continue;
       }
       //       if Play signal received while playing do not consume the signal

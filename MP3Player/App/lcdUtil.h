@@ -4,7 +4,7 @@
 #include <Adafruit_ILI9341.h>
 #include <Adafruit_FT6206.h>
 
-#define UI_MAXCOMMANDS          0x6
+#define UI_MAXCOMMANDS          0x8
 #define UI_CMD_MOVE_DOWN        0x1
 #define UI_CMD_MOVE_UP          0x2
 #define UI_CMD_START_PLAYBACK   0x3
@@ -12,7 +12,7 @@
 #define UI_CMD_UPDATE_PROGRESS  0x5
 #define UI_CMD_RESET_PROGRESS   0x6
 #define UI_CMD_PAUSE_PLAYBACK   0x7
-#define UI_CMD_SHUFFLE_TOGGLE   0x8
+#define UI_CMD_CONTINUOUS_TOGGLE   0x8
 
 #define UI_MAX_BUTTONS 6u
 
@@ -32,3 +32,5 @@ void drawListPointer(uint8_t elementPosition);
 void eraseListPointer(uint8_t elementPosition);
 void eraseProgressBar();
 void incrementProgressBar(float p_progressPct);
+void toggleContinuousBtn(bool isContinuous);
+void togglePauseBtn(bool isPaused);

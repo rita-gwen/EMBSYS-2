@@ -38,7 +38,9 @@ void StartPlayback(void* p_data);
 void StopPlayback(void* p_data);
 void ResetProgressBar(void* p_data);
 void UpdateProgressBar(void* p_data);
-    
+void PausePlayback(void* p_data);
+void ToggleContinuousMode(void* p_data);
+
 struct UICommandAction{
   uint8_t uiCommand;
   void (*action)(void* p_data);
@@ -50,7 +52,9 @@ UICommandAction ui_commands[UI_MAXCOMMANDS] = {
   {UI_CMD_START_PLAYBACK,StartPlayback},
   {UI_CMD_STOP_PLAYBACK,StopPlayback},
   {UI_CMD_RESET_PROGRESS,ResetProgressBar},
-  {UI_CMD_UPDATE_PROGRESS,UpdateProgressBar}
+  {UI_CMD_UPDATE_PROGRESS,UpdateProgressBar},
+  {UI_CMD_PAUSE_PLAYBACK,PausePlayback},
+  {UI_CMD_CONTINUOUS_TOGGLE,ToggleContinuousMode}
 };
 
 /***
@@ -188,10 +192,33 @@ void UpdateProgressBar(void* p_data){
 void PausePlayback(void* p_data){
    char buf[BUFSIZE];
    INT8U err;
+   PrintWithBuf(buf, PRINTBUFMAX, "PAUSE PLAYBACK\n");
+   if(getMp3PlayerStatus() == MP3_STATE_STOPPED)
+     return;    //ignore if not playing
+   bool isPaused = (getMp3PlayerStatus() == MP3_STATE_PAUSED);
    OS_FLAG_GRP* mp3Flags = GetMP3Flags();
-   OS_FLAGS flgs = OSFlagQuery(mp3Flags, &err);
-   if(flgs & MP3_CTRL_FLAG_PAUSE)
-    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PAUSE, OS_FLAG_CLR, &err);
+   if(isPaused)
+    OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PLAY, OS_FLAG_SET, &err);
    else
     OSFlagPost(mp3Flags, MP3_CTRL_FLAG_PAUSE, OS_FLAG_SET, &err);
+     
+   togglePauseBtn(isPaused);
 }
+
+void ToggleContinuousMode(void* p_data){
+   char buf[BUFSIZE];
+   INT8U err;
+   OS_FLAG_GRP* mp3Flags = GetMP3Flags();
+   OS_FLAGS flg = OSFlagQuery(mp3Flags, &err);
+   PrintWithBuf(buf, PRINTBUFMAX, "TOGGLE CONTINUOUS %u\n", flg);
+   if(flg & MP3_CTRL_FLAG_CONTINUOUS){
+      OSFlagPost(mp3Flags, MP3_CTRL_FLAG_CONTINUOUS, OS_FLAG_CLR, &err);
+      toggleContinuousBtn(true);
+   }
+   else{
+      OSFlagPost(mp3Flags, MP3_CTRL_FLAG_CONTINUOUS, OS_FLAG_SET, &err);
+      toggleContinuousBtn(false);
+   }
+}
+    
+    

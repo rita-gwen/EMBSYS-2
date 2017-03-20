@@ -11,3 +11,4 @@
 
 void Mp3PlaybackTask(void* pdata);
 OS_FLAG_GRP* GetMP3Flags(void);
+uint8_t getMp3PlayerStatus();
